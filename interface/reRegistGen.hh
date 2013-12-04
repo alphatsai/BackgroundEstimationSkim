@@ -1,7 +1,10 @@
-//#include "myformat.h"
+#ifndef BACKGROUNDESTIMATION_INTERFACE_REREGISTGEN_H
+#define BACKGROUNDESTIMATION_INTERFACE_REREGISTGEN_H
+
+#include "BpbH/BprimeTobH/interface/format.h"
+
 void reRegistGen( GenInfoBranches& OldGen, GenInfoBranches& NewGen){
 	int size=0;
-	int qSize=0;
 	for( int i=0; i<OldGen.Size; i++){
 		size++;
 		NewGen.Pt[i] = OldGen.Pt[i];
@@ -51,3 +54,4 @@ void reRegistGen( GenInfoBranches& OldGen, GenInfoBranches& NewGen){
 	NewGen.Size=size;
 	NewGen.ncQuarks=OldGen.ncQuarks;
 }
+#endif 

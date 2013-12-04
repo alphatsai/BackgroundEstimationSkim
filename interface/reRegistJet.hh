@@ -1,4 +1,8 @@
-//#include "myformat.h"
+#ifndef BACKGROUNDESTIMATION_INTERFACE_REREGISTGEN_H
+#define BACKGROUNDESTIMATION_INTERFACE_REREGISTGEN_H
+
+#include "BpbH/BprimeTobH/interface/format.h"
+
 void reRegistJet( JetInfoBranches& OldJet, JetInfoBranches& NewJet){
 	int size=0;
 	for( int i=0; i<OldJet.Size; i++){
@@ -74,3 +78,4 @@ void reRegistJet( JetInfoBranches& OldJet, JetInfoBranches& NewJet){
 	}
 	NewJet.Size=size;
 }
+#endif 

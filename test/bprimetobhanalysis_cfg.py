@@ -160,7 +160,13 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     Subjet2CSVDiscMax   = cms.double(options.subjet2CSVDiscMax),
     HTMin               = cms.double(options.hTMin),
     HTMax               = cms.double(options.hTMax), 
-    JetSelParams        = defaultJetSelectionParameters.clone(), 
+    JetSelParams        = defaultJetSelectionParameters.clone(
+		jetPtMin = cms.double(30)
+	), 
+    BJetSelParams       = defaultBJetSelectionParameters.clone(
+		jetCSVDiscMin = cms.double(0.244),	
+		jetPtMin = cms.double(30)
+	), #alpha 
     FatJetSelParams     = defaultFatJetSelectionParameters.clone(), 
     HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(), 
     HTSelParams         = defaultHTSelectionParameters.clone(),
