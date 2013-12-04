@@ -33,6 +33,7 @@ Implementation:
 // Root headers 
 #include <TLorentzVector.h>
 #include <TChain.h>
+#include <TTree.h>
 #include <TFile.h>
 #include <TMath.h>
 #include <TH1D.h>
@@ -104,11 +105,8 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		const std::string               hist_PUDistMC_;
 		const std::string               hist_PUDistData_;
 
-		const double jetPtMin_; 
-		const double jetPtMax_; 
-		const double jetAbsEtaMax_;
-		const double bjetPtMin_; 
 		const edm::ParameterSet jetSelParams_; 
+		const edm::ParameterSet bjetSelParams_; 
 		const edm::ParameterSet evtSelParams_; 
 
 		TChain*            chain_;
@@ -131,7 +129,7 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		bool isData_; 
 		double evtwt_; 
 		double puweight_;
-		double evtwtPu_; 
+		float evtwtPu_; 
 
 		TH1D* 	AK5_num;
 		TH1D* 	AK5_pt;
@@ -158,11 +156,8 @@ BackgroundEstimationSkim::BackgroundEstimationSkim(const edm::ParameterSet& iCon
 	file_PUDistData_(iConfig.getParameter<std::string>("File_PUDistData")),
 	hist_PUDistMC_(iConfig.getParameter<std::string>("Hist_PUDistMC")),
 	hist_PUDistData_(iConfig.getParameter<std::string>("Hist_PUDistData")),
-	jetPtMin_(iConfig.getParameter<double>("JetPtMin")),
-	jetPtMax_(iConfig.getParameter<double>("JetPtMax")),
-	jetAbsEtaMax_(iConfig.getParameter<double>("JetAbsEtaMax")),
-	bjetPtMin_(iConfig.getParameter<double>("BJetPtMin")),
 	jetSelParams_(iConfig.getParameter<edm::ParameterSet>("JetSelParams")), 
+	bjetSelParams_(iConfig.getParameter<edm::ParameterSet>("BJetSelParams")), 
 	evtSelParams_(iConfig.getParameter<edm::ParameterSet>("EvtSelParams")), 
 	isData_(0),
 	evtwt_(1), 
@@ -180,8 +175,8 @@ BackgroundEstimationSkim::~BackgroundEstimationSkim(){
 
 // ------------ method called once each job just before starting event loop  ------------
 void BackgroundEstimationSkim::beginJob(){ 
-
 	chain_ = new TChain(inputTTree_.c_str());
+	newtree = new TTree("tree","");
 
 	for(unsigned i=0; i<inputFiles_.size(); ++i){
 		chain_->Add(inputFiles_.at(i).c_str());
@@ -199,7 +194,7 @@ void BackgroundEstimationSkim::beginJob(){
 
 	newtree->Branch("EvtInfo.WeightEvtPU", &evtwtPu_, "EvtInfo.WeightEvtPU/F"); // Store weight of Evt and PU for each event
 	newGenInfo.RegisterTree(newtree);
-	newJetInfo.RegisterTree(newtree,"JetInfo");
+	newJetInfo.RegisterTree(newtree,"newJetInfo");
 	newFatJetInfo.RegisterTree(newtree,"FatJetInfo");
 	newSubJetInfo.RegisterTree(newtree,"SubJetInfo");
 
@@ -240,7 +235,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 	//pat::strbitset retak5 = jetIDTight.getBitTemplate();
 
 	JetSelector jetSelAK5(jetSelParams_); 
-	JetSelector jetSelBJet(jetSelParams_); 
+	JetSelector jetSelBJet(bjetSelParams_); 
 	pat::strbitset retjetidak5 = jetSelAK5.getBitTemplate(); 
 	pat::strbitset retjetidbjet = jetSelBJet.getBitTemplate(); 
 
@@ -252,7 +247,8 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 	edm::LogInfo("StartingAnalysisLoop") << "Starting analysis loop\n";
 	
 	//// Roop events ==================================================================================================	
-	for(int entry=0; entry<maxEvents_; entry++){
+	//for(int entry=0; entry<maxEvents_; entry++){
+	for(int entry=0; entry<10000; entry++){
 		if( (entry%reportEvery_) == 0) edm::LogInfo("Event") << entry << " of " << maxEvents_; 
 		chain_->GetEntry(entry);
 
@@ -326,11 +322,12 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		bJetVeto_num->Fill(nbjetsNoCA8);
 		bJetVetoMatchCA8_num->Fill(nbjets);
 		evtwtPu_=evtwt_;
-		reRegistGen(GenInfo,newGenInfo); 	
-		reRegistJet(JetInfo,newJetInfo);	
-		reRegistJet(FatJetInfo,newFatJetInfo);	
-		reRegistJet(SubJetInfo,newSubJetInfo);	
+		//reRegistGen(GenInfo,newGenInfo); 	
+		//reRegistJet(JetInfo,newJetInfo);	
+		//reRegistJet(FatJetInfo,newFatJetInfo);	
+		//reRegistJet(SubJetInfo,newSubJetInfo);	
 		newtree->Fill();
+		cout<<entry<<" PASS!!!"<<endl;
 	} //// entry loop 
 
 	fout.close(); 
