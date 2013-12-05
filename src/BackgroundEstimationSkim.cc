@@ -128,9 +128,10 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		edm::Service<TFileService> fs; 
 
 		bool isData_; 
+		bool McFlag_; 
 		double evtwt_; 
 		double puweight_;
-		float evtwtPu_; 
+		double evtwtPu_; 
 
 		TH1D* 	AK5_num;
 		TH1D* 	AK5_pt;
@@ -196,7 +197,8 @@ void BackgroundEstimationSkim::beginJob(){
 	FatJetInfo.Register(chain_,"FatJetInfo");
 	SubJetInfo.Register(chain_,"SubJetInfo");
 
-	newtree->Branch("EvtInfo.WeightEvtPU", &evtwtPu_, "EvtInfo.WeightEvtPU/F"); // Store weight of Evt and PU for each event
+	newtree->Branch("EvtInfo.McFlag", &McFlag_, "EvtInfo.McFlag/O"); // Store weight of Evt and PU for each event
+	newtree->Branch("EvtInfo.WeightEvtPU", &evtwtPu_, "EvtInfo.WeightEvtPU/D"); // Store weight of Evt and PU for each event
 	newGenInfo.RegisterTree(newtree);
 	newJetInfo.RegisterTree(newtree,"JetInfo");
 	newFatJetInfo.RegisterTree(newtree,"FatJetInfo");
@@ -315,18 +317,29 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			++nbjetsNoCA8; //// NO overlap with CA8  
 		} //// AK5 jets END 
 
-		//// Store mini tree and event infomation ================================================================== 
+		//// Store event infomation and bJet veto ================================================================== 
 		AK5_num->Fill(nAK5);
 		bJet_num->Fill(nbjets);
 
 		if( nbjetsNoCA8>0 ) continue;
 		bJetVeto_num->Fill(nbjetsNoCA8);
 		bJetVetoMatchCA8_num->Fill(nbjets);
-		evtwtPu_=evtwt_;
-		reRegistGen(GenInfo,newGenInfo); 	
-		reRegistJet(JetInfo,newJetInfo);	
-		reRegistJet(FatJetInfo,newFatJetInfo);	
-		reRegistJet(SubJetInfo,newSubJetInfo);	
+		
+		//// Fill mini tree =============================================================================================
+		if( isData_ ){
+			McFlag_=0;
+			evtwtPu_=evtwt_;
+			reRegistJet(JetInfo,newJetInfo);	
+			reRegistJet(FatJetInfo,newFatJetInfo);	
+			reRegistJet(SubJetInfo,newSubJetInfo);	
+		}else{
+			McFlag_=1;
+			evtwtPu_=evtwt_;
+			reRegistGen(GenInfo,newGenInfo); 	
+			reRegistJet(JetInfo,newJetInfo);	
+			reRegistJet(FatJetInfo,newFatJetInfo);	
+			reRegistJet(SubJetInfo,newSubJetInfo);	
+		}
 		newtree->Fill();
 		//cout<<entry<<" PASS!!!"<<endl;
 	} //// entry loop 
