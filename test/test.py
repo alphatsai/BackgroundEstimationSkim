@@ -2,6 +2,10 @@ import FWCore.ParameterSet.Config as cms
 
 from FWCore.ParameterSet.VarParsing import VarParsing
 
+#from BackgroundEstimationSkimv1.BackgroundEstimationSkim.BpBpToBHBHinc.BprimeBprimeTobHbHinc_M_800_cfi import * 
+#from BackgroundEstimationSkimv1.BackgroundEstimationSkim.Data.JetHT_Run2012BCD_cfi import * 
+from inputFiles_cfi import * 
+
 FileNames = [
 #'file:BprimeTobH_v1_10_1_HIn.root'
 'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_10_1_HIn.root',
