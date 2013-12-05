@@ -50,6 +50,7 @@ Implementation:
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
+//#include "../interface/format.h"
 #include "BpbH/BprimeTobH/interface/format.h"
 #include "BpbH/BprimeTobH/interface/TriggerBooking.h"
 #include "BpbH/BprimeTobH/interface/Njettiness.hh"
@@ -150,15 +151,19 @@ BackgroundEstimationSkim::BackgroundEstimationSkim(const edm::ParameterSet& iCon
 	reportEvery_(iConfig.getParameter<int>("ReportEvery")),
 	inputTTree_(iConfig.getParameter<std::string>("InputTTree")),
 	inputFiles_(iConfig.getParameter<std::vector<std::string> >("InputFiles")),
+
 	hltPaths_(iConfig.getParameter<edm::ParameterSet>("HLTPaths")),
+
 	doPUReweighting_(iConfig.getParameter<bool>("DoPUReweighting")), 
 	file_PUDistMC_(iConfig.getParameter<std::string>("File_PUDistMC")),
 	file_PUDistData_(iConfig.getParameter<std::string>("File_PUDistData")),
 	hist_PUDistMC_(iConfig.getParameter<std::string>("Hist_PUDistMC")),
 	hist_PUDistData_(iConfig.getParameter<std::string>("Hist_PUDistData")),
+
 	jetSelParams_(iConfig.getParameter<edm::ParameterSet>("JetSelParams")), 
 	bjetSelParams_(iConfig.getParameter<edm::ParameterSet>("BJetSelParams")), 
-	evtSelParams_(iConfig.getParameter<edm::ParameterSet>("EvtSelParams")), 
+	evtSelParams_(iConfig.getParameter<edm::ParameterSet>("EvtSelParams")),
+ 
 	isData_(0),
 	evtwt_(1), 
 	puweight_(1)  
@@ -175,12 +180,11 @@ BackgroundEstimationSkim::~BackgroundEstimationSkim(){
 
 // ------------ method called once each job just before starting event loop  ------------
 void BackgroundEstimationSkim::beginJob(){ 
-	chain_ = new TChain(inputTTree_.c_str());
-	newtree = new TTree("tree","");
+	chain_  = new TChain(inputTTree_.c_str());
+        newtree = fs->make<TTree>("tree", "") ; 
 
 	for(unsigned i=0; i<inputFiles_.size(); ++i){
 		chain_->Add(inputFiles_.at(i).c_str());
-
 		TFile *f = TFile::Open(inputFiles_.at(i).c_str(),"READ");
 		f->Close();
 	}
@@ -194,7 +198,7 @@ void BackgroundEstimationSkim::beginJob(){
 
 	newtree->Branch("EvtInfo.WeightEvtPU", &evtwtPu_, "EvtInfo.WeightEvtPU/F"); // Store weight of Evt and PU for each event
 	newGenInfo.RegisterTree(newtree);
-	newJetInfo.RegisterTree(newtree,"newJetInfo");
+	newJetInfo.RegisterTree(newtree,"JetInfo");
 	newFatJetInfo.RegisterTree(newtree,"FatJetInfo");
 	newSubJetInfo.RegisterTree(newtree,"SubJetInfo");
 
@@ -208,7 +212,7 @@ void BackgroundEstimationSkim::beginJob(){
 	bJet_CSV	= fs->make<TH1D>("bJetInfo.CSV", 	"", 100,  0, 1.);
 	bJetVeto_num 		= fs->make<TH1D>("bJetInfo.Num.Veto",		"", 10, 0, 10); 
 	bJetVetoMatchCA8_num 	= fs->make<TH1D>("bJetInfo.NumMatchToCA8.Veto",	"", 10, 0, 10);
-	
+
 	return;  
 
 }
@@ -231,9 +235,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 	if(  chain_ == 0) return;
 
-	//JetID jetIDTight(JetID::FIRSTDATA,JetID::LOOSE, JetInfo); 
-	//pat::strbitset retak5 = jetIDTight.getBitTemplate();
-
 	JetSelector jetSelAK5(jetSelParams_); 
 	JetSelector jetSelBJet(bjetSelParams_); 
 	pat::strbitset retjetidak5 = jetSelAK5.getBitTemplate(); 
@@ -247,8 +248,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 	edm::LogInfo("StartingAnalysisLoop") << "Starting analysis loop\n";
 	
 	//// Roop events ==================================================================================================	
-	//for(int entry=0; entry<maxEvents_; entry++){
-	for(int entry=0; entry<10000; entry++){
+	for(int entry=0; entry<maxEvents_; entry++){
 		if( (entry%reportEvery_) == 0) edm::LogInfo("Event") << entry << " of " << maxEvents_; 
 		chain_->GetEntry(entry);
 
@@ -318,16 +318,17 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		//// Store mini tree and event infomation ================================================================== 
 		AK5_num->Fill(nAK5);
 		bJet_num->Fill(nbjets);
+
 		if( nbjetsNoCA8>0 ) continue;
 		bJetVeto_num->Fill(nbjetsNoCA8);
 		bJetVetoMatchCA8_num->Fill(nbjets);
 		evtwtPu_=evtwt_;
-		//reRegistGen(GenInfo,newGenInfo); 	
-		//reRegistJet(JetInfo,newJetInfo);	
-		//reRegistJet(FatJetInfo,newFatJetInfo);	
-		//reRegistJet(SubJetInfo,newSubJetInfo);	
+		reRegistGen(GenInfo,newGenInfo); 	
+		reRegistJet(JetInfo,newJetInfo);	
+		reRegistJet(FatJetInfo,newFatJetInfo);	
+		reRegistJet(SubJetInfo,newSubJetInfo);	
 		newtree->Fill();
-		cout<<entry<<" PASS!!!"<<endl;
+		//cout<<entry<<" PASS!!!"<<endl;
 	} //// entry loop 
 
 	fout.close(); 

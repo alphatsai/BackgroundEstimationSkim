@@ -1,4 +1,8 @@
-//#include "myformat.h"
+#ifndef BACKGROUNDESTIMATION_INTERFACE_REREGISTGEN_H
+#define BACKGROUNDESTIMATION_INTERFACE_REREGISTGEN_H
+
+#include "BpbH/BprimeTobH/interface/format.h"
+
 void reRegistGen( GenInfoBranches& OldGen, GenInfoBranches& NewGen){
 	int size=0;
 	for( int i=0; i<OldGen.Size; i++){
@@ -22,7 +26,6 @@ void reRegistGen( GenInfoBranches& OldGen, GenInfoBranches& NewGen){
 		NewGen.Mo1PdgID[i] = OldGen.Mo1PdgID[i];
 		NewGen.Mo1Status[i] = OldGen.Mo1Status[i];
 		NewGen.Da0Pt[i] = OldGen.Da0Pt[i];
-		//std::cout<<OldGen.Da0Pt[i]<<" "<<NewGen.Da0Pt[i]<<std::endl;
 		NewGen.Da0Eta[i] = OldGen.Da0Eta[i];
 		NewGen.Da0Phi[i] = OldGen.Da0Phi[i];
 		NewGen.Da0Mass[i] = OldGen.Da0Mass[i];
@@ -50,3 +53,4 @@ void reRegistGen( GenInfoBranches& OldGen, GenInfoBranches& NewGen){
 	NewGen.Size=size;
 	NewGen.ncQuarks=OldGen.ncQuarks;
 }
+#endif 
