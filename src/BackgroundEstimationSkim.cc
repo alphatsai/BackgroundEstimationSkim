@@ -46,6 +46,7 @@ Implementation:
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "DataFormats/Math/interface/deltaR.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
@@ -85,9 +86,6 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		virtual void analyze(const edm::Event&, const edm::EventSetup&);
 		virtual void endJob();
 	
-		double dPhi(double p1,double p2);	
-		double dR(double e1, double e2, double p1, double p2);	
-
 		edm::LumiReWeighting LumiWeights_; 
 
 		// ----------member data ---------------------------
@@ -228,17 +226,6 @@ void BackgroundEstimationSkim::beginJob(){
 
 }
 
-double BackgroundEstimationSkim::dPhi(double p1, double p2){
-        double dp = p1 - p2;
-        if( fabs(dp+3.14159265358979323846*2.) < fabs(dp)) dp += 3.14159265358979323846*2.;
-        else
-                if( fabs(dp-3.14159265358979323846*2.) < fabs(dp)) dp -= 3.14159265358979323846*2.;
-        return fabs(dp);
-}
-double BackgroundEstimationSkim::dR(double e1, double e2, double p1, double p2){
-	return sqrt(pow(e1-e2,2)+pow(dPhi(p1,p2),2));
-}
-
 // ------------ method called for each event  ------------
 void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup){ 
 	using namespace edm;
@@ -314,7 +301,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			bJet_CSV->Fill(JetInfo.CombinedSVBJetTags[i]);
 
 			for ( int f = 0; f < FatJetInfo.Size; ++f ){ // dR selection
-				if( dR(FatJetInfo.Eta[f], JetInfo.Eta[i], FatJetInfo.Phi[f], JetInfo.Phi[i])< 1.2 ){
+				if( reco::deltaR(FatJetInfo.Eta[f], FatJetInfo.Phi[f], JetInfo.Eta[i], JetInfo.Phi[i])< 1.2 ){
 					overlapWithCA8 = true; 
 					break; 
 				}
