@@ -142,7 +142,7 @@ process.TFileService = cms.Service("TFileService",
 from BpbH.BprimeTobH.TriggerSelector_cfi import * 
 from BpbH.BprimeTobH.HiggsJetSelector_cfi import * 
 from BpbH.BprimeTobH.HTSelector_cfi import * 
-from BpbH.BackgroundEstimationSkim.EventSelector_cfi import * 
+from BpbH.BprimeTobHAnalysis.EventSelector_cfi import * 
 
 process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     MaxEvents           = cms.int32(options.maxEvents),

@@ -126,13 +126,15 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		JetInfoBranches    newSubJetInfo;
 
 		edm::Service<TFileService> fs; 
-
+		
+		int evtNum_;
 		bool isData_; 
 		bool McFlag_; 
 		double evtwt_; 
 		double puweight_;
 		double evtwtPu_; 
 
+		TH1D* 	cutFlow;
 		TH1D* 	AK5_num;
 		TH1D* 	AK5_pt;
 		TH1D* 	AK5_CSV;
@@ -197,6 +199,7 @@ void BackgroundEstimationSkim::beginJob(){
 	FatJetInfo.Register(chain_,"FatJetInfo");
 	SubJetInfo.Register(chain_,"SubJetInfo");
 
+	newtree->Branch("EvtInfo.EvtNum", &evtNum_, "EvtInfo.EvtNum/I"); // Store weight of Evt and PU for each event
 	newtree->Branch("EvtInfo.McFlag", &McFlag_, "EvtInfo.McFlag/O"); // Store weight of Evt and PU for each event
 	newtree->Branch("EvtInfo.WeightEvtPU", &evtwtPu_, "EvtInfo.WeightEvtPU/D"); // Store weight of Evt and PU for each event
 	newGenInfo.RegisterTree(newtree);
@@ -206,6 +209,7 @@ void BackgroundEstimationSkim::beginJob(){
 
 	if(  maxEvents_<0 || maxEvents_>chain_->GetEntries()) maxEvents_ = chain_->GetEntries();
 
+	cutFlow		= fs->make<TH1D>("EvtInfo.CutFlow",	"", 4,   0, 4); 
 	AK5_num		= fs->make<TH1D>("AK5JetInfo.Num",	"", 10,   0, 10); 
 	AK5_pt 		= fs->make<TH1D>("AK5JetInfo.Pt",	"", 1500, 0, 1500);
 	AK5_CSV		= fs->make<TH1D>("AK5JetInfo.CSV", 	"", 100,  0, 1.);
@@ -214,6 +218,11 @@ void BackgroundEstimationSkim::beginJob(){
 	bJet_CSV	= fs->make<TH1D>("bJetInfo.CSV", 	"", 100,  0, 1.);
 	bJetVeto_num 		= fs->make<TH1D>("bJetInfo.Num.Veto",		"", 10, 0, 10); 
 	bJetVetoMatchCA8_num 	= fs->make<TH1D>("bJetInfo.NumMatchToCA8.Veto",	"", 10, 0, 10);
+	
+	cutFlow->GetXaxis()->SetBinLabel(1,"All_Evt");	
+	cutFlow->GetXaxis()->SetBinLabel(2,"Vertex_Sel");	
+	cutFlow->GetXaxis()->SetBinLabel(3,"Trigger_Sel");	
+	cutFlow->GetXaxis()->SetBinLabel(4,"BJetVeto");	
 
 	return;  
 
@@ -259,27 +268,27 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		std::vector<TLorentzVector>p4_bJets; 
 
 		bool passHLT(false); 
-
 		int nGoodVtxs(0);
 		int nAK5(0); 
 		int nbjets(0); 
 		int nbjetsNoCA8(0); 
 
-		chain_->GetEntry(entry);
-
-		isData_   = EvtInfo.McFlag ? 0 : 1; 
+		isData_  = EvtInfo.McFlag ? 0 : 1; 
 		if( !isData_ ) evtwt_    = EvtInfo.Weight; 
 		if( doPUReweighting_ && !isData_ ) puweight_ = LumiWeights_.weight(EvtInfo.TrueIT[0]); 
 
+		cutFlow->Fill(0);
 		//// Vertex selection =====================================================================================
 		VertexSelector vtxSel(VtxInfo); 
 		nGoodVtxs = vtxSel.NGoodVtxs(); 
 		if( nGoodVtxs < 1){ edm::LogInfo("NoGoodPrimaryVertex") << " No good primary vertex "; continue; }
+		cutFlow->Fill(1);
 
 		//// Trigger selection =====================================================================================
 		TriggerSelector trigSel(hltPaths_); 
 		passHLT = trigSel.getTrigDecision(EvtInfo); 
 		if( !passHLT ) continue; 
+		cutFlow->Fill(2);
 
 		//// Recall data no Jet =====================================================================================
 		if( isData_ ){
@@ -321,27 +330,23 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		AK5_num->Fill(nAK5);
 		bJet_num->Fill(nbjets);
 
-		if( nbjetsNoCA8>0 ) continue;
+		if( nbjetsNoCA8>0 ) continue;  //Pass b-Jet veto
 		bJetVeto_num->Fill(nbjetsNoCA8);
 		bJetVetoMatchCA8_num->Fill(nbjets);
-		
+		cutFlow->Fill(3);
+
 		//// Fill mini tree =============================================================================================
 		if( isData_ ){
 			McFlag_=0;
-			evtwtPu_=evtwt_;
-			reRegistJet(JetInfo,newJetInfo);	
-			reRegistJet(FatJetInfo,newFatJetInfo);	
-			reRegistJet(SubJetInfo,newSubJetInfo);	
 		}else{
 			McFlag_=1;
-			evtwtPu_=evtwt_;
-			reRegistGen(GenInfo,newGenInfo); 	
-			reRegistJet(JetInfo,newJetInfo);	
-			reRegistJet(FatJetInfo,newFatJetInfo);	
-			reRegistJet(SubJetInfo,newSubJetInfo);	
 		}
+		evtNum_	 = maxEvents_;
+		reRegistGen(GenInfo,newGenInfo); 	
+		reRegistJet(JetInfo,newJetInfo);	
+		reRegistJet(FatJetInfo,newFatJetInfo);	
+		reRegistJet(SubJetInfo,newSubJetInfo);	
 		newtree->Fill();
-		//cout<<entry<<" PASS!!!"<<endl;
 	} //// entry loop 
 
 	fout.close(); 
