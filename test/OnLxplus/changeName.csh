@@ -4,6 +4,7 @@ if ( $1 == "" ) then
 	echo "The list.txt's structure should be 'fullName;name;'\n"
 	exit	
 endif
+set list_=`cat $1`
 foreach list($list_)
 	set root=`echo $list | awk -F ";" '{print $1}'`
 	set name=`echo $list | awk -F ";" '{print $2}'`

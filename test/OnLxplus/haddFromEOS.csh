@@ -5,16 +5,16 @@ if ( $3 == "" ) then
 	echo " EX: source haddFromEOS.csh [FolderCard] [eos/cms/store/user/jtsai/...] [output]"
 	exit
 endif
-if ( !( -e $3 ) ) then
-	echo "ERROR: Please check the output folder exist or not"
-	exit
-endif
 set eosPath=`echo $HOME/$2`
 if ( !( -e $eosPath ) ) then
 	echo "ERROR: Please check eos if mount in home director"
 	echo "		EX: eosmount ~/eos"
 	exit
 endif
+if ( !( -e $3 ) ) then
+	mkdir -p $3
+endif
+set eosPath=`echo $HOME/$2`
 set eosPath_=`echo $eosPath | sed 's/\//\\\//g'`
 set fs=`cat $1`
 foreach f($fs)

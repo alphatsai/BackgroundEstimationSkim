@@ -328,6 +328,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		}else{
 			McFlag_=1;
 		}
+		evtwtPu_ = evtwt_;
 		evtNum_	 = maxEvents_;
 		reRegistGen(GenInfo,newGenInfo); 	
 		reRegistJet(JetInfo,newJetInfo);	
