@@ -13,7 +13,7 @@ Implementation:
 [Notes on implementation]
  */
 //
-// Original Author:  Eleni Petrakou,27 2-020,+41227674870,
+// Original Author:  Jui-Fa Tsai
 //         Created:  Tue Jul 16 19:48:47 CEST 2013
 // Second Author:    Devdatta Majumder 
 // $Id$
@@ -54,7 +54,7 @@ Implementation:
 //#include "../interface/format.h"
 #include "BpbH/BprimeTobH/interface/format.h"
 #include "BpbH/BprimeTobH/interface/TriggerBooking.h"
-#include "BpbH/BprimeTobH/interface/Njettiness.hh"
+//#include "BpbH/BprimeTobH/interface/Njettiness.hh"
 #include "BpbH/BprimeTobH/interface/Nsubjettiness.hh"
 
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
@@ -132,6 +132,7 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		double puweight_;
 		double evtwtPu_; 
 
+		TH1D* 	Evt_num;
 		TH1D* 	cutFlow;
 		TH1D* 	AK5_num;
 		TH1D* 	AK5_pt;
@@ -207,6 +208,7 @@ void BackgroundEstimationSkim::beginJob(){
 
 	if(  maxEvents_<0 || maxEvents_>chain_->GetEntries()) maxEvents_ = chain_->GetEntries();
 
+	Evt_num		= fs->make<TH1D>("EvtInfo.Entries",	"", 1,   0, 1); 
 	cutFlow		= fs->make<TH1D>("EvtInfo.CutFlow",	"", 4,   0, 4); 
 	AK5_num		= fs->make<TH1D>("AK5JetInfo.Num",	"", 10,   0, 10); 
 	AK5_pt 		= fs->make<TH1D>("AK5JetInfo.Pt",	"", 1500, 0, 1500);
@@ -217,9 +219,10 @@ void BackgroundEstimationSkim::beginJob(){
 	bJetVeto_num 		= fs->make<TH1D>("bJetInfo.Num.Veto",		"", 10, 0, 10); 
 	bJetVetoMatchCA8_num 	= fs->make<TH1D>("bJetInfo.NumMatchToCA8.Veto",	"", 10, 0, 10);
 	
+	Evt_num->GetXaxis()->SetBinLabel(1,"Entries");	
 	cutFlow->GetXaxis()->SetBinLabel(1,"All_Evt");	
-	cutFlow->GetXaxis()->SetBinLabel(2,"Vertex_Sel");	
-	cutFlow->GetXaxis()->SetBinLabel(3,"Trigger_Sel");	
+	cutFlow->GetXaxis()->SetBinLabel(2,"Trigger_Sel");	
+	cutFlow->GetXaxis()->SetBinLabel(3,"Vertex_Sel");	
 	cutFlow->GetXaxis()->SetBinLabel(4,"BJetVeto");	
 
 	return;  
@@ -249,6 +252,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 	for(int entry=0; entry<maxEvents_; entry++){
 		if( (entry%reportEvery_) == 0) edm::LogInfo("Event") << entry << " of " << maxEvents_; 
 		chain_->GetEntry(entry);
+		Evt_num->Fill(0);
 
 		//// Event variables 
 		std::vector<TLorentzVector>p4_Jets; 
@@ -263,19 +267,20 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		isData_  = EvtInfo.McFlag ? 0 : 1; 
 		if( !isData_ ) evtwt_    = EvtInfo.Weight; 
 		if( doPUReweighting_ && !isData_ ) puweight_ = LumiWeights_.weight(EvtInfo.TrueIT[0]); 
+		evtwt_ *= puweight_; 
 
-		cutFlow->Fill(0);
-		//// Vertex selection =====================================================================================
-		VertexSelector vtxSel(VtxInfo); 
-		nGoodVtxs = vtxSel.NGoodVtxs(); 
-		if( nGoodVtxs < 1){ edm::LogInfo("NoGoodPrimaryVertex") << " No good primary vertex "; continue; }
-		cutFlow->Fill(1);
-
+		cutFlow->Fill(double(0),evtwt_);
 		//// Trigger selection =====================================================================================
 		TriggerSelector trigSel(hltPaths_); 
 		passHLT = trigSel.getTrigDecision(EvtInfo); 
 		if( !passHLT ) continue; 
-		cutFlow->Fill(2);
+		cutFlow->Fill(double(1),evtwt_);
+
+		//// Vertex selection =====================================================================================
+		VertexSelector vtxSel(VtxInfo); 
+		nGoodVtxs = vtxSel.NGoodVtxs(); 
+		if( nGoodVtxs < 1){ edm::LogInfo("NoGoodPrimaryVertex") << " No good primary vertex "; continue; }
+		cutFlow->Fill(double(2),evtwt_);
 
 		//// Recall data no Jet =====================================================================================
 		if( isData_ ){
@@ -283,7 +288,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		}
 
 		//// AK5 and bJet selection ================================================================================ 
-		evtwt_ *= puweight_; 
 
 		for ( int i=0; i<JetInfo.Size; ++i ){ 
 			retjetidak5.set(false);
@@ -292,13 +296,13 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 			if( jetSelAK5(JetInfo, i,retjetidak5) == 0 ) continue; 
 			++nAK5; //AK5 Jet selection
-			AK5_pt->Fill(JetInfo.Pt[i]); 
-			AK5_CSV->Fill(JetInfo.CombinedSVBJetTags[i]);
+			AK5_pt->Fill(double(JetInfo.Pt[i]),evtwt_); 
+			AK5_CSV->Fill(double(JetInfo.CombinedSVBJetTags[i]),evtwt_);
  
 			if( jetSelBJet(JetInfo, i,retjetidbjet) == 0 ) continue; 
 			++nbjets; //b Jet selection
-			bJet_pt->Fill(JetInfo.Pt[i]); 
-			bJet_CSV->Fill(JetInfo.CombinedSVBJetTags[i]);
+			bJet_pt->Fill(double(JetInfo.Pt[i]),evtwt_); 
+			bJet_CSV->Fill(double(JetInfo.CombinedSVBJetTags[i]),evtwt_);
 
 			for ( int f = 0; f < FatJetInfo.Size; ++f ){ // dR selection
 				if( reco::deltaR(FatJetInfo.Eta[f], FatJetInfo.Phi[f], JetInfo.Eta[i], JetInfo.Phi[i])< 1.2 ){
@@ -314,13 +318,13 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		} //// AK5 jets END 
 
 		//// Store event infomation and bJet veto ================================================================== 
-		AK5_num->Fill(nAK5);
-		bJet_num->Fill(nbjets);
+		AK5_num->Fill(double(nAK5),evtwt_);
+		bJet_num->Fill(double(nbjets),evtwt_);
 
 		if( nbjetsNoCA8>0 ) continue;  //Pass b-Jet veto
-		bJetVeto_num->Fill(nbjetsNoCA8);
-		bJetVetoMatchCA8_num->Fill(nbjets);
-		cutFlow->Fill(3);
+		bJetVeto_num->Fill(double(nbjetsNoCA8),evtwt_);
+		bJetVetoMatchCA8_num->Fill(double(nbjets),evtwt_);
+		cutFlow->Fill(double(3),evtwt_);
 
 		//// Fill mini tree =============================================================================================
 		if( isData_ ){
