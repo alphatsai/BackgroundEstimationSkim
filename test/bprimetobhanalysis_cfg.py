@@ -153,6 +153,7 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(), 
     HTSelParams         = defaultHTSelectionParameters.clone(),
     EvtSelParams        = defaultEventSelectionParameters.clone(),
+    BuildMinTree        = cms.bool(False),
     ) 
 
 process.p = cms.Path(process.BprimebH)

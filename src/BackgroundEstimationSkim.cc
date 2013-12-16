@@ -63,7 +63,7 @@ Implementation:
 #include "BpbH/BprimeTobH/interface/TriggerSelector.h"
 #include "BpbH/BprimeTobH/interface/VertexSelector.h"
 #include "BpbH/BprimeTobH/interface/JetSelector.h"
-//#include "BpbH/BprimeTobH/interface/FatJetSelector.h"
+#include "BpbH/BprimeTobH/interface/FatJetSelector.h"
 //#include "BpbH/BprimeTobH/interface/HTSelector.h"
 //#include "BpbH/BprimeTobHAnalysis/interface/EventSelector.h"
 
@@ -104,9 +104,12 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		const std::string               hist_PUDistMC_;
 		const std::string               hist_PUDistData_;
 
+		//const edm::ParameterSet higgsJetSelParame_; 
 		const edm::ParameterSet jetSelParams_; 
 		const edm::ParameterSet bjetSelParams_; 
 		const edm::ParameterSet evtSelParams_; 
+		
+		const bool BuildMinTree_;
 
 		TChain*            chain_;
 		TTree*		   newtree;	
@@ -162,10 +165,13 @@ BackgroundEstimationSkim::BackgroundEstimationSkim(const edm::ParameterSet& iCon
 	hist_PUDistMC_(iConfig.getParameter<std::string>("Hist_PUDistMC")),
 	hist_PUDistData_(iConfig.getParameter<std::string>("Hist_PUDistData")),
 
+	//higgsJetSelParame_(iConfig.getParameter<edm::ParameterSet>("HiggsJetSelParams")),
 	jetSelParams_(iConfig.getParameter<edm::ParameterSet>("JetSelParams")), 
 	bjetSelParams_(iConfig.getParameter<edm::ParameterSet>("BJetSelParams")), 
 	evtSelParams_(iConfig.getParameter<edm::ParameterSet>("EvtSelParams")),
- 
+
+	BuildMinTree_(iConfig.getParameter<bool>("BuildMinTree")), 
+
 	isData_(0),
 	evtwt_(1), 
 	puweight_(1)  
@@ -183,7 +189,6 @@ BackgroundEstimationSkim::~BackgroundEstimationSkim(){
 // ------------ method called once each job just before starting event loop  ------------
 void BackgroundEstimationSkim::beginJob(){ 
 	chain_  = new TChain(inputTTree_.c_str());
-        newtree = fs->make<TTree>("tree", "") ; 
 
 	for(unsigned i=0; i<inputFiles_.size(); ++i){
 		chain_->Add(inputFiles_.at(i).c_str());
@@ -198,13 +203,16 @@ void BackgroundEstimationSkim::beginJob(){
 	FatJetInfo.Register(chain_,"FatJetInfo");
 	SubJetInfo.Register(chain_,"SubJetInfo");
 
-	newtree->Branch("EvtInfo.EvtNum", &evtNum_, "EvtInfo.EvtNum/I"); // Store weight of Evt and PU for each event
-	newtree->Branch("EvtInfo.McFlag", &McFlag_, "EvtInfo.McFlag/O"); // Store weight of Evt and PU for each event
-	newtree->Branch("EvtInfo.WeightEvtPU", &evtwtPu_, "EvtInfo.WeightEvtPU/D"); // Store weight of Evt and PU for each event
-	newGenInfo.RegisterTree(newtree);
-	newJetInfo.RegisterTree(newtree,"JetInfo");
-	newFatJetInfo.RegisterTree(newtree,"FatJetInfo");
-	newSubJetInfo.RegisterTree(newtree,"SubJetInfo");
+        if( BuildMinTree_ ) {
+		newtree = fs->make<TTree>("tree", "") ; 
+		newtree->Branch("EvtInfo.EvtNum", &evtNum_, "EvtInfo.EvtNum/I"); // Store weight of Evt and PU for each event
+		newtree->Branch("EvtInfo.McFlag", &McFlag_, "EvtInfo.McFlag/O"); // Store weight of Evt and PU for each event
+		newtree->Branch("EvtInfo.WeightEvtPU", &evtwtPu_, "EvtInfo.WeightEvtPU/D"); // Store weight of Evt and PU for each event
+		newGenInfo.RegisterTree(newtree);
+		newJetInfo.RegisterTree(newtree,"JetInfo");
+		newFatJetInfo.RegisterTree(newtree,"FatJetInfo");
+		newSubJetInfo.RegisterTree(newtree,"SubJetInfo");
+	}
 
 	if(  maxEvents_<0 || maxEvents_>chain_->GetEntries()) maxEvents_ = chain_->GetEntries();
 
@@ -218,6 +226,17 @@ void BackgroundEstimationSkim::beginJob(){
 	bJet_CSV	= fs->make<TH1D>("bJetInfo.CSV", 	"", 100,  0, 1.);
 	bJetVeto_num 		= fs->make<TH1D>("bJetInfo.Num.Veto",		"", 10, 0, 10); 
 	bJetVetoMatchCA8_num 	= fs->make<TH1D>("bJetInfo.NumMatchToCA8.Veto",	"", 10, 0, 10);
+
+	Evt_num->Sumw2();
+	cutFlow->Sumw2();
+	AK5_num->Sumw2();
+	AK5_pt->Sumw2();
+	AK5_CSV->Sumw2();
+	bJet_num->Sumw2();
+	bJet_pt->Sumw2();
+	bJet_CSV->Sumw2();
+	bJetVeto_num->Sumw2();
+	bJetVetoMatchCA8_num->Sumw2();
 	
 	Evt_num->GetXaxis()->SetBinLabel(1,"Entries");	
 	cutFlow->GetXaxis()->SetBinLabel(1,"All_Evt");	
@@ -236,6 +255,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 	if(  chain_ == 0) return;
 
+	//FatJetSelector fatjetSelHiggs(higgsJetSelParame_);
 	JetSelector jetSelAK5(jetSelParams_); 
 	JetSelector jetSelBJet(bjetSelParams_); 
 	pat::strbitset retjetidak5 = jetSelAK5.getBitTemplate(); 
@@ -327,18 +347,20 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		cutFlow->Fill(double(3),evtwt_);
 
 		//// Fill mini tree =============================================================================================
-		if( isData_ ){
-			McFlag_=0;
-		}else{
-			McFlag_=1;
+		if( BuildMinTree_ ){
+			if( isData_ ){
+				McFlag_=0;
+			}else{
+				McFlag_=1;
+			}
+			evtwtPu_ = evtwt_;
+			evtNum_	 = maxEvents_;
+			reRegistGen(GenInfo,newGenInfo); 	
+			reRegistJet(JetInfo,newJetInfo);	
+			reRegistJet(FatJetInfo,newFatJetInfo);	
+			reRegistJet(SubJetInfo,newSubJetInfo);	
+			newtree->Fill();
 		}
-		evtwtPu_ = evtwt_;
-		evtNum_	 = maxEvents_;
-		reRegistGen(GenInfo,newGenInfo); 	
-		reRegistJet(JetInfo,newJetInfo);	
-		reRegistJet(FatJetInfo,newFatJetInfo);	
-		reRegistJet(SubJetInfo,newSubJetInfo);	
-		newtree->Fill();
 	} //// entry loop 
 
 	fout.close(); 
