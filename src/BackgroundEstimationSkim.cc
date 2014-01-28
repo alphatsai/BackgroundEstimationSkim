@@ -70,6 +70,8 @@ Implementation:
 #include "BpbH/BackgroundEstimationSkim/interface/reRegistGen.hh"
 #include "BpbH/BackgroundEstimationSkim/interface/reRegistJet.hh"
 
+#include "BpbH/BprimeTobHAnalysis/interface/HiggsBRscaleFactors.h" 
+
 //
 // class declaration
 //
@@ -351,6 +353,29 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		if( !isData_ ) evtwt_    = EvtInfo.Weight; 
 		if( doPUReweighting_ && !isData_ ) puweight_ = LumiWeights_.weight(EvtInfo.TrueIT[0]); 
 		evtwt_ *= puweight_; 
+
+		//// Higgs BR reweighting, for b'b'>bHbH sample
+		if ( !isData_ ) {
+			//int nbprimeBH(0), nbprimeBZ(0), nbprimeTW(0); 
+			for (int igen=0; igen < GenInfo.Size; ++igen) {
+				if ( GenInfo.Status[igen] == 3 && TMath::Abs(GenInfo.PdgID[igen]) == 25 && GenInfo.nDa[igen] >= 2 ) { //// H found
+					int higgsDau0 = abs(GenInfo.Da0PdgID[igen]);
+					int higgsDau1 = abs(GenInfo.Da1PdgID[igen]);
+					int higgsDau = higgsDau0+higgsDau1; 
+					if(higgsDau==10) evtwt_ *= HiggsBRscaleFactors::higgsBBSf;
+					if(higgsDau==30) evtwt_ *= HiggsBRscaleFactors::higgsTauTauSf;
+					if(higgsDau==26) evtwt_ *= HiggsBRscaleFactors::higgsMuMuSf;
+					if(higgsDau==8)  evtwt_ *= HiggsBRscaleFactors::higgsCCSf;
+					if(higgsDau==6)  evtwt_ *= HiggsBRscaleFactors::higgsSSSf;
+					if(higgsDau==16) evtwt_ *= HiggsBRscaleFactors::higgsTTSf;
+					if(higgsDau==42) evtwt_ *= HiggsBRscaleFactors::higgsGGSf;
+					if(higgsDau==44) evtwt_ *= HiggsBRscaleFactors::higgsGammaGammaSf;
+					if(higgsDau==45) evtwt_ *= HiggsBRscaleFactors::higgsZGammaSf;
+					if(higgsDau==48) evtwt_ *= HiggsBRscaleFactors::higgsWWSf;
+					if(higgsDau==46) evtwt_ *= HiggsBRscaleFactors::higgsZZSf; 
+				}
+			}
+		}
 
 		cutFlow->Fill(double(0),evtwt_);
 		//// Trigger selection =====================================================================================
