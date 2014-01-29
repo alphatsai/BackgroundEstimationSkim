@@ -2,6 +2,8 @@
 #define BACKGROUNDESTIMATION_INTERFACE_REREGISTJET_H
 
 #include "BpbH/BprimeTobH/interface/format.h"
+#include "BpbH/BprimeTobH/interface/JetCollection.h"
+#include "BpbH/BprimeTobH/interface/Jet.h"
 
 void reRegistJet( JetInfoBranches& OldJet, JetInfoBranches& NewJet){
 	int size=0;
@@ -75,6 +77,82 @@ void reRegistJet( JetInfoBranches& OldJet, JetInfoBranches& NewJet){
 		NewJet.Jet_FatJetIdx[i] = OldJet.Jet_FatJetIdx[i];
 		NewJet.Jet_SubJet1Idx[i] = OldJet.Jet_SubJet1Idx[i];
 		NewJet.Jet_SubJet2Idx[i] = OldJet.Jet_SubJet2Idx[i];	
+	}
+	NewJet.Size=size;
+}
+
+void reRegistJet( JetCollection& OldJet, JetInfoBranches& NewJet){
+	int size=0;
+	for( JetCollection::const_iterator ijet = OldJet.begin(); ijet != OldJet.end(); ++ijet) {
+	//	NewJet.Index[size] = ijet->Index();
+		NewJet.NTracks[size] = ijet->NTracks();
+		NewJet.Et[size] = ijet->Et();
+		NewJet.Pt[size] = ijet->Pt();
+		NewJet.Unc[size] = ijet->Unc();
+		NewJet.Eta[size] = ijet->Eta();
+		NewJet.Phi[size] = ijet->Phi();
+		NewJet.Energy[size] = ijet->Energy();
+		NewJet.Px[size] = ijet->Px();
+		NewJet.Py[size] = ijet->Py();
+		NewJet.Pz[size] = ijet->Pz();
+		NewJet.Mass[size] = ijet->Mass();
+		NewJet.Area[size] = ijet->Area();
+		NewJet.EtPruned[size] = ijet->EtPruned();
+		NewJet.PtPruned[size] = ijet->PtPruned();
+		NewJet.UncPruned[size] = ijet->UncPruned();
+		NewJet.EtaPruned[size] = ijet->EtaPruned();
+		NewJet.PhiPruned[size] = ijet->PhiPruned();
+		NewJet.EnergyPruned[size] = ijet->EnergyPruned();
+		NewJet.PxPruned[size] = ijet->PxPruned();
+		NewJet.PyPruned[size] = ijet->PyPruned();
+		NewJet.PzPruned[size] = ijet->PzPruned();
+		NewJet.MassPruned[size] = ijet->MassPruned();
+		NewJet.AreaPruned[size] = ijet->AreaPruned();
+		NewJet.tau1[size] = ijet->tau1();
+		NewJet.tau2[size] = ijet->tau2();
+		NewJet.tau3[size] = ijet->tau3();
+		NewJet.JetIDLOOSE[size] = ijet->JetIDLOOSE();
+		NewJet.JetIDTIGHT[size] = ijet->JetIDTIGHT();
+		NewJet.JetCharge[size] = ijet->JetCharge();
+		NewJet.QGTagsMLP[size] = ijet->QGTagsMLP();
+		NewJet.QGTagsLikelihood[size] = ijet->QGTagsLikelihood();
+		NewJet.NConstituents[size] = ijet->NConstituents();
+		NewJet.NCH[size] = ijet->NCH();
+		NewJet.CEF[size] = ijet->CEF();
+		NewJet.NHF[size] = ijet->NHF();
+		NewJet.NEF[size] = ijet->NEF();
+		NewJet.CHF[size] = ijet->CHF();
+		NewJet.PtCorrRaw[size] = ijet->PtCorrRaw();
+		NewJet.PtCorrL2[size] = ijet->PtCorrL2();
+		NewJet.PtCorrL3[size] = ijet->PtCorrL3();
+		NewJet.PtCorrL7g[size] = ijet->PtCorrL7g();
+		NewJet.PtCorrL7uds[size] = ijet->PtCorrL7uds();
+		NewJet.PtCorrL7c[size] = ijet->PtCorrL7c();
+		NewJet.PtCorrL7b[size] = ijet->PtCorrL7b();
+		NewJet.JetBProbBJetTags[size] = ijet->JetBProbBJetTags();
+		NewJet.JetProbBJetTags[size] = ijet->JetProbBJetTags();
+		NewJet.TrackCountHiPurBJetTags[size] = ijet->TrackCountHiPurBJetTags();
+		NewJet.CombinedSVBJetTags[size] = ijet->CombinedSVBJetTags();
+		NewJet.CombinedSVMVABJetTags[size] = ijet->CombinedSVMVABJetTags();
+		NewJet.SoftElecByIP3dBJetTags[size] = ijet->SoftElecByIP3dBJetTags();
+		NewJet.SoftElecByPtBJetTags[size] = ijet->SoftElecByPtBJetTags();
+		NewJet.SoftMuonBJetTags[size] = ijet->SoftMuonBJetTags();
+		NewJet.SoftMuonByIP3dBJetTags[size] = ijet->SoftMuonByIP3dBJetTags();
+		NewJet.SoftMuonByPtBJetTags[size] = ijet->SoftMuonByPtBJetTags();
+		NewJet.DoubleSVHighEffBJetTags[size] = ijet->DoubleSVHighEffBJetTags();
+		NewJet.GenJetPt[size] = ijet->GenJetPt();
+		NewJet.GenJetEta[size] = ijet->GenJetEta();
+		NewJet.GenJetPhi[size] = ijet->GenJetPhi();
+		NewJet.GenPt[size] = ijet->GenPt();
+		NewJet.GenEta[size] = ijet->GenEta();
+		NewJet.GenPhi[size] = ijet->GenPhi();
+		NewJet.GenPdgID[size] = ijet->GenPdgID();
+		NewJet.GenFlavor[size] = ijet->GenFlavor();
+		NewJet.GenMCTag[size] = ijet->GenMCTag();
+		NewJet.Jet_FatJetIdx[size] = ijet->Jet_FatJetIdx();
+		NewJet.Jet_SubJet1Idx[size] = ijet->Jet_SubJet1Idx();
+		NewJet.Jet_SubJet2Idx[size] = ijet->Jet_SubJet2Idx();	
+		size++;
 	}
 	NewJet.Size=size;
 }

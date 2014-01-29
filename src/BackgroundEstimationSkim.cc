@@ -70,10 +70,15 @@ Implementation:
 #include "BpbH/BackgroundEstimationSkim/interface/reRegistGen.hh"
 #include "BpbH/BackgroundEstimationSkim/interface/reRegistJet.hh"
 
+///// Jet Correction
 #include "BpbH/BprimeTobHAnalysis/src/JMEUncertUtil.cc"
 #include "BpbH/BprimeTobHAnalysis/src/BTagSFUtil.cc"
-#include "BpbH/BprimeTobHAnalysis/src/ApplyBTagSF.cc"
+//#include "BpbH/BprimeTobHAnalysis/src/ApplyBTagSF.cc"
 #include "BpbH/BprimeTobHAnalysis/src/ApplyHiggsTagSF.cc"
+
+#include "BpbH/BprimeTobHAnalysis/interface/JMEUncertUtil.h"
+//#include "BpbH/BprimeTobHAnalysis/interface/ApplyBTagSF.h"
+#include "BpbH/BackgroundEstimationSkim/interface/ApplyBTagSF.h"
 #include "BpbH/BprimeTobHAnalysis/interface/ApplyHiggsTagSF.h"
 
 #include "BpbH/BprimeTobHAnalysis/interface/HiggsBRscaleFactors.h" 
@@ -112,11 +117,22 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		const std::string               hist_PUDistMC_;
 		const std::string               hist_PUDistData_;
 
+		const double jetPtMin_ ; 
+		const double jetPtMax_ ;
+		const double bjetPtMin_ ; 
+		const double bjetCSV_ ; 
+
 		const edm::ParameterSet higgsJetSelParame_; 
 		const edm::ParameterSet jetSelParams_; 
 		const edm::ParameterSet bjetSelParams_; 
 		const edm::ParameterSet evtSelParams_; 
-		
+
+		const edm::ParameterSet jmeParams_; 
+		const double jesShift_;
+		const double jerShift_; 
+		const double SFbShift_;
+		const double SFlShift_;
+
 		const bool BuildMinTree_;
 
 		TChain*            chain_;
@@ -144,6 +160,9 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		// New branch
 		int evtNum_;
 		bool McFlag_; 
+		bool CSVLSF_[128]; 
+		bool CSVMSF_[128]; 
+		bool CSVTSF_[128]; 
 		double evtwtPu_; 
 		double evtwtHiggsTagCorr_; 
 
@@ -197,10 +216,21 @@ BackgroundEstimationSkim::BackgroundEstimationSkim(const edm::ParameterSet& iCon
 	hist_PUDistMC_(iConfig.getParameter<std::string>("Hist_PUDistMC")),
 	hist_PUDistData_(iConfig.getParameter<std::string>("Hist_PUDistData")),
 
+	jetPtMin_(iConfig.getParameter<double>("JetPtMin")),
+	jetPtMax_(iConfig.getParameter<double>("JetPtMax")),
+  	bjetPtMin_(iConfig.getParameter<double>("BJetPtMin")),
+  	bjetCSV_(iConfig.getParameter<double>("BJetCSV")),
+
 	higgsJetSelParame_(iConfig.getParameter<edm::ParameterSet>("HiggsJetSelParams")),
 	jetSelParams_(iConfig.getParameter<edm::ParameterSet>("JetSelParams")), 
 	bjetSelParams_(iConfig.getParameter<edm::ParameterSet>("BJetSelParams")), 
 	evtSelParams_(iConfig.getParameter<edm::ParameterSet>("EvtSelParams")),
+
+	jmeParams_(iConfig.getParameter<edm::ParameterSet>("JMEParams")),
+	jesShift_(iConfig.getParameter<double>("JESShift")),
+	jerShift_(iConfig.getParameter<double>("JERShift")),
+	SFbShift_(iConfig.getParameter<double>("SFbShift")),
+	SFlShift_(iConfig.getParameter<double>("SFlShift")),
 
 	BuildMinTree_(iConfig.getParameter<bool>("BuildMinTree")), 
 
@@ -244,6 +274,9 @@ void BackgroundEstimationSkim::beginJob(){
 		newtree->Branch("EvtInfo.WeightHiggsTagCorr", &evtwtHiggsTagCorr_, "EvtInfo.WeightHiggsTagCorr/D"); // Store weight of Evt and PU for each event
 		newGenInfo.RegisterTree(newtree);
 		newJetInfo.RegisterTree(newtree,"JetInfo");
+		newtree->Branch("JetInfo.CSVLSF", &CSVLSF_[0], "JetInfo.CSVLSF[JetInfo.Size]/O"); // Store weight of Evt and PU for each event
+		newtree->Branch("JetInfo.CSVMSF", &CSVMSF_[0], "JetInfo.CSVMSF[JetInfo.Size]/O"); // Store weight of Evt and PU for each event
+		newtree->Branch("JetInfo.CSVTSF", &CSVTSF_[0], "JetInfo.CSVTSF[JetInfo.Size]/O"); // Store weight of Evt and PU for each event
 		newFatJetInfo.RegisterTree(newtree,"FatJetInfo");
 		newSubJetInfo.RegisterTree(newtree,"SubJetInfo");
 	}
@@ -336,7 +369,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 	JetSelector jetSelBJet(bjetSelParams_); 
 	pat::strbitset rethiggsjet = fatjetSelHiggs.getBitTemplate(); 
 	pat::strbitset retjetidak5 = jetSelAK5.getBitTemplate(); 
-	pat::strbitset retjetidbjet = jetSelBJet.getBitTemplate(); 
 
 	ofstream fout("Evt_NoJets.txt"); 
 	if(  isData_ ){
@@ -365,6 +397,8 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		if( !isData_ ) evtwt_    = EvtInfo.Weight; 
 		if( doPUReweighting_ && !isData_ ) puweight_ = LumiWeights_.weight(EvtInfo.TrueIT[0]); 
 		evtwt_ *= puweight_; 
+
+    		JetCollection ak5jets_corr; 
 
 		//// Higgs BR reweighting, for b'b'>bHbH sample
 		if ( !isData_ ) {
@@ -428,21 +462,15 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			}
 		}
 
-		//// AK5 and bJet selection ================================================================================ 
+
+		//// AK5 and bJet selection ================================================================================
+		//// Preselection for AK5 Jet 
+    		JetCollection myjets ;
 		for ( int i=0; i<JetInfo.Size; ++i ){ 
 			retjetidak5.set(false);
-			retjetidbjet.set(false);
 			bool overlapWithCA8(false); 
-
-			if( jetSelAK5(JetInfo, i,retjetidak5) == 0 ) continue; 
-			++nAK5; //AK5 Jet selection
-			AK5_pt->Fill(double(JetInfo.Pt[i]),evtwt_); 
-			AK5_eta->Fill(double(JetInfo.Eta[i]),evtwt_); 
-			AK5_CSV->Fill(double(JetInfo.CombinedSVBJetTags[i]),evtwt_);
- 
-			if( jetSelBJet(JetInfo, i,retjetidbjet) == 0 ) continue; 
-			++nbjets; //b Jet selection
-			for ( unsigned int f=0; f<higgsJets.size(); ++f ){ // dR selection
+			if( jetSelAK5(JetInfo, i, retjetidak5) == 0 ) continue; // AK5 pre-selection
+ 			for ( unsigned int f=0; f<higgsJets.size(); ++f ){ // dR selection
 				if( reco::deltaR(higgsJets[f].Eta(), higgsJets[f].Phi(), JetInfo.Eta[i], JetInfo.Phi[i])< 1.2 ){
 					overlapWithCA8 = true; 
 					break; 
@@ -450,76 +478,181 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 				else{
 					overlapWithCA8 = false; 
 				} 
-			} 
-			if( overlapWithCA8 ) continue; 
+			}
+      			Jet thisjet(JetInfo, i);
+      			if( !overlapWithCA8 ) myjets.push_back(thisjet) ; 
+		}
+
+
+		//// Jet Correction: JER, JES
+		JetCollection ak5jets_tmp; 
+		if ( !isData_) {
+			// Only AK5 jets not overlapping with Higgs jets 
+			JMEUncertUtil* jmeUtil_jer = new JMEUncertUtil(jmeParams_, EvtInfo, myjets, "JER", jerShift_) ; 
+			JetCollection ak5jets_jer = jmeUtil_jer->GetModifiedJetColl() ; 
+			delete jmeUtil_jer ; 
+
+			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, ak5jets_jer, "JES", jesShift_) ; 
+			ak5jets_tmp = jmeUtil_jes->GetModifiedJetColl() ; 
+			delete jmeUtil_jes ; 
+		}
+		else {
+			// Only AK5 jets not overlapping with Higgs jets 
+			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, myjets, "JES", jesShift_) ; 
+			ak5jets_tmp = jmeUtil_jes->GetModifiedJetColl() ; 
+			delete jmeUtil_jes ; 
+		}
+
+		//// AK5 Jet Selection
+    		for (JetCollection::const_iterator ijet = ak5jets_tmp.begin(); ijet != ak5jets_tmp.end(); ++ijet) {
+      			if ( ijet->Pt() < jetPtMin_ || ijet->Pt() > jetPtMax_) continue ;
+			AK5_pt->Fill(double(ijet->Pt()),evtwt_); 
+			AK5_eta->Fill(double(ijet->Eta()),evtwt_); 
+			AK5_CSV->Fill(double(ijet->CombinedSVBJetTags()),evtwt_);
+      			ak5jets_corr.push_back(*ijet);
+			++nAK5; 
+		}
+
+ 
+		//// Jet Correction: BTag
+		JetCollection ak5jets_bTag_corr;
+		if ( !isData_ ){
+			string algo;
+			if( bjetCSV_ == 0.244 ){ 
+				algo = "CSVL"; 
+			}else if( bjetCSV_ == 0.679 ){
+				algo = "CSVM"; 
+			}else if( bjetCSV_ == 0.898 ){
+				algo = "CSVT"; 
+			}else{
+				edm::LogError("ApplyBTagSF") << " Wrong b-tagging algo_ chosen: " << algo << ". Choose between CSVL:0.244, CSVM:0.679, or CSVT:0.898" ; 
+			}
+			ApplyBTagSF * btagsf =  new ApplyBTagSF(ak5jets_corr, bjetCSV_, algo, SFbShift_, SFlShift_) ;  
+			ak5jets_bTag_corr =  btagsf->getBtaggedJetsWithSF () ; 
+			delete btagsf ; 
+
+		}else{
+			ak5jets_bTag_corr = ak5jets_corr;
+		}
+
+		//// b Jet Selection
+		JetCollection bjets_corr;
+    		for (JetCollection::const_iterator ijet = ak5jets_bTag_corr.begin(); ijet != ak5jets_bTag_corr.end(); ++ijet) {
+			if( ijet->Pt() < bjetPtMin_ || ijet->CombinedSVBJetTags() < bjetCSV_ ) continue;  
+			bJet_pt->Fill(double(ijet->Pt()),evtwt_); 
+			bJet_eta->Fill(double(ijet->Eta()),evtwt_); 
+			bJet_CSV->Fill(double(ijet->CombinedSVBJetTags()),evtwt_);
+			bjets_corr.push_back(*ijet);
 			++nbjetsNoCA8; //// NO overlap with CA8  
-			bJet_pt->Fill(double(JetInfo.Pt[i]),evtwt_); 
-			bJet_eta->Fill(double(JetInfo.Eta[i]),evtwt_); 
-			bJet_CSV->Fill(double(JetInfo.CombinedSVBJetTags[i]),evtwt_);
+		}  
 
-		} //// AK5 jets END 
-
-		//// Store event infomation and bJet veto ================================================================== 
+		
+		//// Fill histogram  ================================================================== 
 		AK5_num->Fill(double(nAK5),evtwt_);
 		bJet_num->Fill(double(nbjetsNoCA8),evtwt_);
-		//bJet_num->Fill(double(nbjets),evtwt_);
-
 		if(nbjetsNoCA8>=1){
+			int ii=0;
 			int lead=-1;
 			int leadPt=-1;
-			for( int i=0; i<JetInfo.Size; i++){
-				bJet1_pt->Fill(double(JetInfo.Pt[i]),evtwt_);
-				bJet1_eta->Fill(double(JetInfo.Eta[i]),evtwt_);
-				bJet1_CSV->Fill(double(JetInfo.CombinedSVBJetTags[i]),evtwt_);
-				if( leadPt<JetInfo.Pt[i] ){ 
-					lead=i;
-					leadPt=JetInfo.Pt[i];
+    			for (JetCollection::const_iterator ijet = bjets_corr.begin(); ijet != bjets_corr.end(); ++ijet) {
+				bJet1_pt->Fill(double(ijet->Pt()),evtwt_);
+				bJet1_eta->Fill(double(ijet->Eta()),evtwt_);
+				bJet1_CSV->Fill(double(ijet->CombinedSVBJetTags()),evtwt_);
+				if( leadPt < ijet->Pt() ){ 
+					lead = ii;
+					leadPt = ijet->Pt();
 				}
+				ii++;	
 			}
-			bJet1_lead_pt->Fill(double(JetInfo.Pt[lead]),evtwt_);
-			bJet1_lead_eta->Fill(double(JetInfo.Eta[lead]),evtwt_);
-			bJet1_lead_CSV->Fill(double(JetInfo.CombinedSVBJetTags[lead]),evtwt_);
+			bJet1_lead_pt->Fill(double(bjets_corr[lead].Pt()),evtwt_);
+			bJet1_lead_eta->Fill(double(bjets_corr[lead].Eta()),evtwt_);
+			bJet1_lead_CSV->Fill(double(bjets_corr[lead].CombinedSVBJetTags()),evtwt_);
 				
 		}
 		if(nbjetsNoCA8>=2){
+			int ii=0;
 			int lead=-1;
 			int leadPt=-1;
-			for( int i=0; i<JetInfo.Size; i++){
-				bJet2_pt->Fill(double(JetInfo.Pt[i]),evtwt_);
-				bJet2_eta->Fill(double(JetInfo.Eta[i]),evtwt_);
-				bJet2_CSV->Fill(double(JetInfo.CombinedSVBJetTags[i]),evtwt_);
-				if( leadPt<JetInfo.Pt[i] ){ 
-					lead=i;
-					leadPt=JetInfo.Pt[i];
+    			for (JetCollection::const_iterator ijet = bjets_corr.begin(); ijet != bjets_corr.end(); ++ijet) {
+				bJet2_pt->Fill(double(ijet->Pt()),evtwt_);
+				bJet2_eta->Fill(double(ijet->Eta()),evtwt_);
+				bJet2_CSV->Fill(double(ijet->CombinedSVBJetTags()),evtwt_);
+				if( leadPt<ijet->Pt() ){ 
+					lead=ii;
+					leadPt=ijet->Pt();
 				}
+				ii++;	
 			}	
-			bJet2_lead_pt->Fill(double(JetInfo.Pt[lead]),evtwt_);
-			bJet2_lead_eta->Fill(double(JetInfo.Eta[lead]),evtwt_);
-			bJet2_lead_CSV->Fill(double(JetInfo.CombinedSVBJetTags[lead]),evtwt_);
+			bJet2_lead_pt->Fill(double(bjets_corr[lead].Pt()),evtwt_);
+			bJet2_lead_eta->Fill(double(bjets_corr[lead].Eta()),evtwt_);
+			bJet2_lead_CSV->Fill(double(bjets_corr[lead].CombinedSVBJetTags()),evtwt_);
 		}
 
-
+		//// Store new tree, new branch with Jet correction  ==================================================================================================== 
 		if( nbjetsNoCA8>0 ) continue;  //Pass b-Jet veto
+		bJetVeto_num->Fill(double(nbjetsNoCA8),evtwt_);
+		//bJetVetoMatchCA8_num->Fill(double(nbjets),evtwt_);
+		cutFlow->Fill(double(3),evtwt_);
+
+		JetCollection allak5jets, allak5jets_corr;
+		for ( int i=0; i<JetInfo.Size; ++i ){
+      			Jet thisjet(JetInfo, i);
+			allak5jets.push_back(thisjet);
+		}
+		//// 1. Jet Correction: JER, JES
+		if ( !isData_) {
+			// Only AK5 jets not overlapping with Higgs jets 
+			JMEUncertUtil* jmeUtil_jer = new JMEUncertUtil(jmeParams_, EvtInfo, allak5jets, "JER", jerShift_) ; 
+			JetCollection allak5jets_jer = jmeUtil_jer->GetModifiedJetColl() ; 
+			delete jmeUtil_jer ; 
+
+			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, allak5jets_jer, "JES", jesShift_) ; 
+			allak5jets_corr = jmeUtil_jes->GetModifiedJetColl() ; 
+			delete jmeUtil_jes ; 
+		}else {
+			// Only AK5 jets not overlapping with Higgs jets 
+			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, allak5jets, "JES", jesShift_) ; 
+			allak5jets_corr = jmeUtil_jes->GetModifiedJetColl() ; 
+			delete jmeUtil_jes ; 
+
+		}
+		//// 2. Jet Correction: BTag, (For bVeto, don't need to apply) 
+		ApplyBTagSF * btagCSVLsf =  new ApplyBTagSF(allak5jets_corr, 0.244, "CSVL", SFbShift_, SFlShift_) ;  
+		ApplyBTagSF * btagCSVMsf =  new ApplyBTagSF(allak5jets_corr, 0.679, "CSVM", SFbShift_, SFlShift_) ;  
+		ApplyBTagSF * btagCSVTsf =  new ApplyBTagSF(allak5jets_corr, 0.898, "CSVT", SFbShift_, SFlShift_) ;  
+		const int allak5jets_num = allak5jets_corr.size();
+		bool passBTagCSVL[allak5jets_num], passBTagCSVM[allak5jets_num], passBTagCSVT[allak5jets_num];	
+		for( int ijet=0; ijet<allak5jets_num; ijet++){
+			passBTagCSVL[ijet] =  btagCSVLsf->getBtaggedSF(ijet); 
+			passBTagCSVM[ijet] =  btagCSVMsf->getBtaggedSF(ijet); 
+			passBTagCSVT[ijet] =  btagCSVTsf->getBtaggedSF(ijet); 
+		}
+		delete btagCSVLsf;
+		delete btagCSVMsf;
+		delete btagCSVTsf;
+
+		// Fill bVeto Histogram	
+		int ii=0;
 		int lead=-1;
 		int leadPt=-1;
-		bJetVeto_num->Fill(double(nbjetsNoCA8),evtwt_);
-		bJetVetoMatchCA8_num->Fill(double(nbjets),evtwt_);
-		cutFlow->Fill(double(3),evtwt_);
-		for( int i=0; i<JetInfo.Size; i++){
-			bJetVeto_pt->Fill(double(JetInfo.Pt[i]),evtwt_);
-			bJetVeto_eta->Fill(double(JetInfo.Eta[i]),evtwt_);
-			bJetVeto_CSV->Fill(double(JetInfo.CombinedSVBJetTags[i]),evtwt_);
-			if( leadPt<JetInfo.Pt[i] ){ 
-				lead=i;
-				leadPt=JetInfo.Pt[i];
+    		for (JetCollection::const_iterator ijet = allak5jets_corr.begin(); ijet != allak5jets_corr.end(); ++ijet) {
+			bJetVeto_pt->Fill(double(ijet->Pt()),evtwt_);
+			bJetVeto_eta->Fill(double(ijet->Eta()),evtwt_);
+			bJetVeto_CSV->Fill(double(ijet->CombinedSVBJetTags()),evtwt_);
+			if( leadPt<ijet->Pt() ){ 
+				lead=ii;
+				leadPt=ijet->Pt();
 			}
+			ii++;	
 		}
-		bJetVeto_lead_pt->Fill(double(JetInfo.Pt[lead]),evtwt_);
-		bJetVeto_lead_eta->Fill(double(JetInfo.Eta[lead]),evtwt_);
-		bJetVeto_lead_CSV->Fill(double(JetInfo.CombinedSVBJetTags[lead]),evtwt_);
+		bJetVeto_lead_pt->Fill(double(allak5jets_corr[lead].Pt()),evtwt_);
+		bJetVeto_lead_eta->Fill(double(allak5jets_corr[lead].Eta()),evtwt_);
+		bJetVeto_lead_CSV->Fill(double(allak5jets_corr[lead].CombinedSVBJetTags()),evtwt_);
 
-		//// Fill mini tree after bJetVeto =============================================================================================
+
+		// Fill new tree, new branch
 		if( BuildMinTree_ ){
+			cout<<entry<<endl;
 			if( isData_ ){
 				McFlag_=0;
 			}else{
@@ -528,10 +661,15 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			evtwtPu_ = evtwt_;
 			evtNum_	 = maxEvents_;
 			evtwtHiggsTagCorr_ = higgsTagCorr_;
-			reRegistGen(GenInfo,newGenInfo); 	
-			reRegistJet(JetInfo,newJetInfo);	
-			reRegistJet(FatJetInfo,newFatJetInfo);	
-			reRegistJet(SubJetInfo,newSubJetInfo);	
+			reRegistGen(GenInfo, newGenInfo); 	
+			reRegistJet(allak5jets_corr, newJetInfo);	
+			reRegistJet(FatJetInfo, newFatJetInfo);	
+			reRegistJet(SubJetInfo, newSubJetInfo);
+			for( int i=0; i<allak5jets_num; i++){
+				CSVLSF_[i] = passBTagCSVL[i];
+				CSVMSF_[i] = passBTagCSVM[i];
+				CSVTSF_[i] = passBTagCSVT[i];
+			}	
 			newtree->Fill();
 		}
 	} //// entry loop 
