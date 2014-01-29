@@ -70,6 +70,12 @@ Implementation:
 #include "BpbH/BackgroundEstimationSkim/interface/reRegistGen.hh"
 #include "BpbH/BackgroundEstimationSkim/interface/reRegistJet.hh"
 
+#include "BpbH/BprimeTobHAnalysis/src/JMEUncertUtil.cc"
+#include "BpbH/BprimeTobHAnalysis/src/BTagSFUtil.cc"
+#include "BpbH/BprimeTobHAnalysis/src/ApplyBTagSF.cc"
+#include "BpbH/BprimeTobHAnalysis/src/ApplyHiggsTagSF.cc"
+#include "BpbH/BprimeTobHAnalysis/interface/ApplyHiggsTagSF.h"
+
 #include "BpbH/BprimeTobHAnalysis/interface/HiggsBRscaleFactors.h" 
 
 //
@@ -130,12 +136,16 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 
 		edm::Service<TFileService> fs; 
 		
-		int evtNum_;
 		bool isData_; 
-		bool McFlag_; 
 		double evtwt_; 
 		double puweight_;
+		double higgsTagCorr_;
+
+		// New branch
+		int evtNum_;
+		bool McFlag_; 
 		double evtwtPu_; 
+		double evtwtHiggsTagCorr_; 
 
 		TH1D* 	Evt_num;
 		TH1D* 	cutFlow;
@@ -196,7 +206,8 @@ BackgroundEstimationSkim::BackgroundEstimationSkim(const edm::ParameterSet& iCon
 
 	isData_(0),
 	evtwt_(1), 
-	puweight_(1)  
+	puweight_(1),
+	higgsTagCorr_(1)  
 { 
 
 	if( doPUReweighting_) LumiWeights_ = edm::LumiReWeighting(file_PUDistMC_, file_PUDistData_, hist_PUDistMC_, hist_PUDistData_);
@@ -230,6 +241,7 @@ void BackgroundEstimationSkim::beginJob(){
 		newtree->Branch("EvtInfo.EvtNum", &evtNum_, "EvtInfo.EvtNum/I"); // Store weight of Evt and PU for each event
 		newtree->Branch("EvtInfo.McFlag", &McFlag_, "EvtInfo.McFlag/O"); // Store weight of Evt and PU for each event
 		newtree->Branch("EvtInfo.WeightEvtPU", &evtwtPu_, "EvtInfo.WeightEvtPU/D"); // Store weight of Evt and PU for each event
+		newtree->Branch("EvtInfo.WeightHiggsTagCorr", &evtwtHiggsTagCorr_, "EvtInfo.WeightHiggsTagCorr/D"); // Store weight of Evt and PU for each event
 		newGenInfo.RegisterTree(newtree);
 		newJetInfo.RegisterTree(newtree,"JetInfo");
 		newFatJetInfo.RegisterTree(newtree,"FatJetInfo");
@@ -402,7 +414,18 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			if( fatjetSelHiggs(FatJetInfo, i, SubJetInfo, rethiggsjet)==0 ) continue; //higgs selection				
 			TLorentzVector jet;
 			jet.SetPtEtaPhiM(FatJetInfo.Pt[i], FatJetInfo.Eta[i], FatJetInfo.Phi[i], FatJetInfo.Mass[i]);
-			higgsJets.push_back(jet);	
+			higgsJets.push_back(jet);
+
+			if ( !isData_ ) { //// Apply Higgs-tagging scale factor 
+				int iSubJet1 = FatJetInfo.Jet_SubJet1Idx[i];
+				int iSubJet2 = FatJetInfo.Jet_SubJet2Idx[i];
+				ApplyHiggsTagSF* higgsTagSF = new ApplyHiggsTagSF(double(SubJetInfo.Pt[iSubJet1]), double(SubJetInfo.Pt[iSubJet2]), 
+						double(SubJetInfo.Eta[iSubJet1]), double(SubJetInfo.Eta[iSubJet2]),
+						SubJetInfo.GenFlavor[iSubJet1], SubJetInfo.GenFlavor[iSubJet2], 
+						SubJetInfo.CombinedSVBJetTags[iSubJet1], SubJetInfo.CombinedSVBJetTags[iSubJet2]) ; 
+				higgsTagCorr_ = higgsTagSF->GetHiggsTagSF() ;
+				delete higgsTagSF ; 
+			}
 		}
 
 		//// AK5 and bJet selection ================================================================================ 
@@ -504,6 +527,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			}
 			evtwtPu_ = evtwt_;
 			evtNum_	 = maxEvents_;
+			evtwtHiggsTagCorr_ = higgsTagCorr_;
 			reRegistGen(GenInfo,newGenInfo); 	
 			reRegistJet(JetInfo,newJetInfo);	
 			reRegistJet(FatJetInfo,newFatJetInfo);	

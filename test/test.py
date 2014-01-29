@@ -139,9 +139,9 @@ process.TFileService = cms.Service("TFileService",
     fileName = cms.string(options.outFilename) 
     )
 
-from BpbH.BprimeTobH.TriggerSelector_cfi import * 
-from BpbH.BprimeTobH.HiggsJetSelector_cfi import * 
-from BpbH.BprimeTobH.HTSelector_cfi import * 
+#from BpbH.BprimeTobH.TriggerSelector_cfi import * 
+#from BpbH.BprimeTobH.HiggsJetSelector_cfi import * 
+#from BpbH.BprimeTobH.HTSelector_cfi import * 
 from BpbH.BprimeTobHAnalysis.EventSelector_cfi import * 
 
 process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
@@ -167,8 +167,8 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(), 
     HTSelParams         = defaultHTSelectionParameters.clone(),
     EvtSelParams        = defaultEventSelectionParameters.clone(),
-    BuildMinTree        = cms.bool(False),
-    #BuildMinTree        = cms.bool(True),
+    #BuildMinTree        = cms.bool(False),
+    BuildMinTree        = cms.bool(True),
     ) 
 
 process.p = cms.Path(process.BprimebH)
