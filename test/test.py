@@ -160,7 +160,7 @@ process.MessageLogger.cout = cms.untracked.PSet(
 process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(1)
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) ) # Leave it this way. 
-
+process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 process.source = cms.Source("EmptySource")
 
 process.TFileService = cms.Service("TFileService",
@@ -214,9 +214,8 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     SFbShift            = cms.double(options.SFbShift), 
     SFlShift            = cms.double(options.SFlShift),
 
-    BuildMinTree        = cms.bool(False),
-    #BuildMinTree        = cms.bool(True),
+    #BuildMinTree        = cms.bool(False),
+    BuildMinTree        = cms.bool(True),
     ) 
-
 process.p = cms.Path(process.BprimebH)
 
