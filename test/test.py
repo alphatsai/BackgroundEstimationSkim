@@ -32,8 +32,7 @@ options.register('reportEvery', 1000,
     VarParsing.varType.int,
     "Report every N events (default is N=1000)"
     )
-#options.register('jetPtMin', 50.,
-options.register('jetPtMin', 30.,  #For bVeto
+options.register('jetPtMin', 50.,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.float,
     "Minimum jet Pt"
@@ -43,14 +42,12 @@ options.register('jetPtMax', 1.E6,
     VarParsing.varType.float,
     "Maximum jet Pt"
     )
-#options.register('bJetPtMin', 80.,
-options.register('bJetPtMin', 30., #For bVeto
+options.register('bJetPtMin', 80.,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.float,
     "Minimum b jet Pt"
     )
-#options.register('bjetCSV', 0.679,
-options.register('bjetCSV', 0.244, #For bVeto
+options.register('bJetCSV', 0.679,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.float,
     "CSV discriminate b jet"
@@ -191,17 +188,21 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     JetPtMin            = cms.double(options.jetPtMin),
     JetPtMax            = cms.double(options.jetPtMax),
     BJetPtMin           = cms.double(options.bJetPtMin),
-    BJetCSV           	= cms.double(options.bjetCSV),
+    BJetCSV           	= cms.double(options.bJetCSV),
 
     JetSelParams        = defaultJetSelectionParameters.clone(
 		jetPtMin = cms.double(10)
 	),
-    BJetSelParams       = defaultBJetSelectionParameters.clone(
-		jetCSVDiscMin = cms.double(0.244),	
-		jetPtMin = cms.double(30)
-	), #alpha 
-    FatJetSelParams     = defaultFatJetSelectionParameters.clone(), 
-    HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(), 
+    BJetSelParams       = defaultBJetSelectionParameters.clone(),
+#    FatJetSelParams     = defaultFatJetSelectionParameters.clone(
+#	), 
+    HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(
+    		fatJetMassMin       = cms.double(75),
+    		fatJetMassMax       = cms.double(200),
+    		fatJetTau2ByTau1Max = cms.double(1.1),
+    		subjet1CSVDiscMin   = cms.double(0),
+    		subjet2CSVDiscMin   = cms.double(0),
+	), 
     HTSelParams         = defaultHTSelectionParameters.clone(),
     EvtSelParams        = defaultEventSelectionParameters.clone(),
 
@@ -213,8 +214,8 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     SFbShift            = cms.double(options.SFbShift), 
     SFlShift            = cms.double(options.SFlShift),
 
-    #BuildMinTree        = cms.bool(False),
-    BuildMinTree        = cms.bool(True),
+    BuildMinTree        = cms.bool(False),
+    #BuildMinTree        = cms.bool(True),
     ) 
 
 process.p = cms.Path(process.BprimebH)

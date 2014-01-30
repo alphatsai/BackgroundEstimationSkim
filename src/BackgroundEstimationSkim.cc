@@ -168,6 +168,10 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 
 		TH1D* 	Evt_num;
 		TH1D* 	cutFlow;
+		TH1D* 	Higgs_num;
+		TH1D* 	Higgs_pt;
+		TH1D* 	Higgs_tau2Bytau1;
+		TH1D* 	Higgs_mass;
 		TH1D* 	AK5_num;
 		TH1D* 	AK5_pt;
 		TH1D* 	AK5_eta;
@@ -176,26 +180,12 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		TH1D* 	bJet_pt;
 		TH1D* 	bJet_eta;
 		TH1D* 	bJet_CSV;
-		TH1D* 	bJetVeto_pt;
-		TH1D* 	bJetVeto_eta;
-		TH1D* 	bJetVeto_CSV;
-		TH1D* 	bJetVeto_num; 
-		TH1D* 	bJetVeto_lead_pt;
-		TH1D* 	bJetVeto_lead_eta;
-		TH1D* 	bJetVeto_lead_CSV;
-		TH1D* 	bJetVetoMatchCA8_num;
 		TH1D* 	bJet1_pt;
 		TH1D* 	bJet1_eta;
 		TH1D* 	bJet1_CSV;
 		TH1D* 	bJet1_lead_pt;
 		TH1D* 	bJet1_lead_eta;
 		TH1D* 	bJet1_lead_CSV;
-		TH1D* 	bJet2_pt;
-		TH1D* 	bJet2_eta;
-		TH1D* 	bJet2_CSV;
-		TH1D* 	bJet2_lead_pt;
-		TH1D* 	bJet2_lead_eta;
-		TH1D* 	bJet2_lead_CSV;
 
 };
 
@@ -284,7 +274,11 @@ void BackgroundEstimationSkim::beginJob(){
 	if(  maxEvents_<0 || maxEvents_>chain_->GetEntries()) maxEvents_ = chain_->GetEntries();
 
 	Evt_num		= fs->make<TH1D>("EvtInfo.Entries",	"", 1,   0, 1); 
-	cutFlow		= fs->make<TH1D>("EvtInfo.CutFlow",	"", 4,   0, 4); 
+	cutFlow		= fs->make<TH1D>("EvtInfo.CutFlow",	"", 5,   0, 5); 
+	Higgs_num	= fs->make<TH1D>("HiggsJetInfo.Num",	"", 10,   0, 10); 
+	Higgs_pt 	= fs->make<TH1D>("HiggsJetInfo.Pt",	"", 1500, 0, 1500);
+	Higgs_tau2Bytau1= fs->make<TH1D>("HiggsJetInfo.Tau2ByTau1",	"", 10, 0, 1);
+	Higgs_mass	= fs->make<TH1D>("HiggsJetInfo.Mass",	"", 3000, 0, 300);
 	AK5_num		= fs->make<TH1D>("AK5JetInfo.Num",	"", 10,   0, 10); 
 	AK5_pt 		= fs->make<TH1D>("AK5JetInfo.Pt",	"", 1500, 0, 1500);
 	AK5_eta 	= fs->make<TH1D>("AK5JetInfo.Eta",	"", 600, -3, 3);
@@ -293,27 +287,6 @@ void BackgroundEstimationSkim::beginJob(){
 	bJet_pt		= fs->make<TH1D>("bJetInfo.Pt",		"", 1500, 0, 1500);
 	bJet_eta	= fs->make<TH1D>("bJetInfo.Eta",	"", 600, -3, 3);
 	bJet_CSV	= fs->make<TH1D>("bJetInfo.CSV", 	"", 100,  0, 1.);
-	bJetVeto_num 	= fs->make<TH1D>("bJetInfo.Num.Veto",	"", 10, 0, 10); 
-	bJetVeto_pt	= fs->make<TH1D>("bJetInfo.Pt.Veto",	"", 1500, 0, 1500);
-	bJetVeto_eta	= fs->make<TH1D>("bJetInfo.Eta.Veto",	"", 600, -3, 3);
-	bJetVeto_CSV	= fs->make<TH1D>("bJetInfo.CSV.Veto", 	"", 100,  0, 1.);
-	bJetVeto_lead_pt	= fs->make<TH1D>("bJetInfo.lead.Pt.Veto",	"", 1500, 0, 1500);
-	bJetVeto_lead_eta	= fs->make<TH1D>("bJetInfo.lead.Eta.Veto",	"", 600, -3, 3);
-	bJetVeto_lead_CSV	= fs->make<TH1D>("bJetInfo.lead.CSV.Veto", 	"", 100,  0, 1.);
-	bJetVetoMatchCA8_num 	= fs->make<TH1D>("bJetInfo.NumMatchToCA8.Veto",	"", 10, 0, 10);
-
-	bJet1_pt	= fs->make<TH1D>("bJetInfo.Pt.1",	"", 1500, 0, 1500);
-	bJet1_eta	= fs->make<TH1D>("bJetInfo.Eta.1",	"", 600, -3, 3);
-	bJet1_CSV	= fs->make<TH1D>("bJetInfo.CSV.1", 	"", 100,  0, 1.);
-	bJet1_lead_pt	= fs->make<TH1D>("bJetInfo.lead.Pt.1",	"", 1500, 0, 1500);
-	bJet1_lead_eta	= fs->make<TH1D>("bJetInfo.lead.Eta.1",	"", 600, -3, 3);
-	bJet1_lead_CSV	= fs->make<TH1D>("bJetInfo.lead.CSV.1", 	"", 100,  0, 1.);
-	bJet2_pt	= fs->make<TH1D>("bJetInfo.Pt.2",	"", 1500, 0, 1500);
-	bJet2_eta	= fs->make<TH1D>("bJetInfo.Eta.2",	"", 600, -3, 3);
-	bJet2_CSV	= fs->make<TH1D>("bJetInfo.CSV.2", 	"", 100,  0, 1.);
-	bJet2_lead_pt	= fs->make<TH1D>("bJetInfo.lead.Pt.2",	"", 1500, 0, 1500);
-	bJet2_lead_eta	= fs->make<TH1D>("bJetInfo.lead.Eta.2",	"", 600, -3, 3);
-	bJet2_lead_CSV	= fs->make<TH1D>("bJetInfo.lead.CSV.2", 	"", 100,  0, 1.);
 
 	Evt_num->Sumw2();
 	cutFlow->Sumw2();
@@ -325,33 +298,13 @@ void BackgroundEstimationSkim::beginJob(){
 	bJet_pt->Sumw2();
 	bJet_eta->Sumw2();
 	bJet_CSV->Sumw2();
-	bJetVeto_pt->Sumw2();
-	bJetVeto_eta->Sumw2();
-	bJetVeto_CSV->Sumw2();
-	bJetVeto_lead_pt->Sumw2();
-	bJetVeto_lead_eta->Sumw2();
-	bJetVeto_lead_CSV->Sumw2();
-	bJetVeto_num->Sumw2();
-	bJetVetoMatchCA8_num->Sumw2();
 	
-	bJet1_pt->Sumw2();
-	bJet1_eta->Sumw2();
-	bJet1_CSV->Sumw2();
-	bJet1_lead_pt->Sumw2();
-	bJet1_lead_eta->Sumw2();
-	bJet1_lead_CSV->Sumw2();
-	bJet2_pt->Sumw2();
-	bJet2_eta->Sumw2();
-	bJet2_CSV->Sumw2();
-	bJet2_lead_pt->Sumw2();
-	bJet2_lead_eta->Sumw2();
-	bJet2_lead_CSV->Sumw2();
-
 	Evt_num->GetXaxis()->SetBinLabel(1,"Entries");	
 	cutFlow->GetXaxis()->SetBinLabel(1,"All_Evt");	
 	cutFlow->GetXaxis()->SetBinLabel(2,"Trigger_Sel");	
 	cutFlow->GetXaxis()->SetBinLabel(3,"Vertex_Sel");	
-	cutFlow->GetXaxis()->SetBinLabel(4,"BJetVeto");	
+	cutFlow->GetXaxis()->SetBinLabel(4,"HiggsJet_Sel");	
+	cutFlow->GetXaxis()->SetBinLabel(5,"BJet_Sel");	
 
 	return;  
 
@@ -366,7 +319,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 	FatJetSelector fatjetSelHiggs(higgsJetSelParame_);
 	JetSelector jetSelAK5(jetSelParams_); 
-	JetSelector jetSelBJet(bjetSelParams_); 
+	//JetSelector jetSelBJet(bjetSelParams_); 
 	pat::strbitset rethiggsjet = fatjetSelHiggs.getBitTemplate(); 
 	pat::strbitset retjetidak5 = jetSelAK5.getBitTemplate(); 
 
@@ -379,7 +332,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 	
 	//// Roop events ==================================================================================================	
 	for(int entry=0; entry<maxEvents_; entry++){
-		if( (entry%reportEvery_) == 0) edm::LogInfo("Event") << entry << " of " << maxEvents_; 
+		if( (entry%reportEvery_) == 0) edm::LogInfo("Event") << entry << " of " << maxEvents_;
 		chain_->GetEntry(entry);
 		Evt_num->Fill(0);
 
@@ -443,12 +396,20 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 		////  Higgs jets selection ================================================================================ 
 		vector<TLorentzVector> higgsJets;
-		for ( int i=0; i< FatJetInfo.Size; ++i ){ 
+			cout<<"================= CA8 ======"<<endl; 
+			cout<<FatJetInfo.Size<<endl; 
+		for ( int i=0; i< FatJetInfo.Size; ++i ){
+			cout<<"CSV out: "<<FatJetInfo.CombinedSVBJetTags[i]<<endl;
 			rethiggsjet.set(false);
-			if( fatjetSelHiggs(FatJetInfo, i, SubJetInfo, rethiggsjet)==0 ) continue; //higgs selection				
+			if( fatjetSelHiggs( FatJetInfo, i, SubJetInfo, rethiggsjet)==0 ) continue; //higgs selection				
 			TLorentzVector jet;
 			jet.SetPtEtaPhiM(FatJetInfo.Pt[i], FatJetInfo.Eta[i], FatJetInfo.Phi[i], FatJetInfo.Mass[i]);
 			higgsJets.push_back(jet);
+			
+			Higgs_pt->Fill(FatJetInfo.Pt[i]);
+			double tau2Bytau1 = FatJetInfo.tau2[i]/FatJetInfo.tau1[i];
+			Higgs_tau2Bytau1->Fill(tau2Bytau1);
+			Higgs_mass->Fill(FatJetInfo.Mass[i]);
 
 			if ( !isData_ ) { //// Apply Higgs-tagging scale factor 
 				int iSubJet1 = FatJetInfo.Jet_SubJet1Idx[i];
@@ -461,16 +422,17 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 				delete higgsTagSF ; 
 			}
 		}
-
+		Higgs_num->Fill(higgsJets.size()); 
 
 		//// AK5 and bJet selection ================================================================================
 		//// Preselection for AK5 Jet 
     		JetCollection myjets ;
+			cout<<"================= AK5 ======"<<endl; 
 		for ( int i=0; i<JetInfo.Size; ++i ){ 
 			retjetidak5.set(false);
 			bool overlapWithCA8(false); 
 			if( jetSelAK5(JetInfo, i, retjetidak5) == 0 ) continue; // AK5 pre-selection
- 			for ( unsigned int f=0; f<higgsJets.size(); ++f ){ // dR selection
+/* 			for ( unsigned int f=0; f<higgsJets.size(); ++f ){ // dR selection
 				if( reco::deltaR(higgsJets[f].Eta(), higgsJets[f].Phi(), JetInfo.Eta[i], JetInfo.Phi[i])< 1.2 ){
 					overlapWithCA8 = true; 
 					break; 
@@ -478,7 +440,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 				else{
 					overlapWithCA8 = false; 
 				} 
-			}
+			}*/
       			Jet thisjet(JetInfo, i);
       			if( !overlapWithCA8 ) myjets.push_back(thisjet) ; 
 		}
@@ -547,53 +509,16 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		}  
 
 		
-		//// Fill histogram  ================================================================== 
+		//// Event selection  =================================================================================================================================== 
 		AK5_num->Fill(double(nAK5),evtwt_);
 		bJet_num->Fill(double(nbjetsNoCA8),evtwt_);
-		if(nbjetsNoCA8>=1){
-			int ii=0;
-			int lead=-1;
-			int leadPt=-1;
-    			for (JetCollection::const_iterator ijet = bjets_corr.begin(); ijet != bjets_corr.end(); ++ijet) {
-				bJet1_pt->Fill(double(ijet->Pt()),evtwt_);
-				bJet1_eta->Fill(double(ijet->Eta()),evtwt_);
-				bJet1_CSV->Fill(double(ijet->CombinedSVBJetTags()),evtwt_);
-				if( leadPt < ijet->Pt() ){ 
-					lead = ii;
-					leadPt = ijet->Pt();
-				}
-				ii++;	
-			}
-			bJet1_lead_pt->Fill(double(bjets_corr[lead].Pt()),evtwt_);
-			bJet1_lead_eta->Fill(double(bjets_corr[lead].Eta()),evtwt_);
-			bJet1_lead_CSV->Fill(double(bjets_corr[lead].CombinedSVBJetTags()),evtwt_);
-				
-		}
-		if(nbjetsNoCA8>=2){
-			int ii=0;
-			int lead=-1;
-			int leadPt=-1;
-    			for (JetCollection::const_iterator ijet = bjets_corr.begin(); ijet != bjets_corr.end(); ++ijet) {
-				bJet2_pt->Fill(double(ijet->Pt()),evtwt_);
-				bJet2_eta->Fill(double(ijet->Eta()),evtwt_);
-				bJet2_CSV->Fill(double(ijet->CombinedSVBJetTags()),evtwt_);
-				if( leadPt<ijet->Pt() ){ 
-					lead=ii;
-					leadPt=ijet->Pt();
-				}
-				ii++;	
-			}	
-			bJet2_lead_pt->Fill(double(bjets_corr[lead].Pt()),evtwt_);
-			bJet2_lead_eta->Fill(double(bjets_corr[lead].Eta()),evtwt_);
-			bJet2_lead_CSV->Fill(double(bjets_corr[lead].CombinedSVBJetTags()),evtwt_);
-		}
+
+		if( higgsJets.size()<1 ) continue;
+		cutFlow->Fill(double(3),evtwt_);
+		if( nbjetsNoCA8<2 ) continue;
+		cutFlow->Fill(double(4),evtwt_);
 
 		//// Store new tree, new branch with Jet correction  ==================================================================================================== 
-		if( nbjetsNoCA8>0 ) continue;  //Pass b-Jet veto
-		bJetVeto_num->Fill(double(nbjetsNoCA8),evtwt_);
-		//bJetVetoMatchCA8_num->Fill(double(nbjets),evtwt_);
-		cutFlow->Fill(double(3),evtwt_);
-
 		JetCollection allak5jets, allak5jets_corr;
 		for ( int i=0; i<JetInfo.Size; ++i ){
       			Jet thisjet(JetInfo, i);
@@ -630,25 +555,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		delete btagCSVLsf;
 		delete btagCSVMsf;
 		delete btagCSVTsf;
-
-		// Fill bVeto Histogram	
-		int ii=0;
-		int lead=-1;
-		int leadPt=-1;
-    		for (JetCollection::const_iterator ijet = allak5jets_corr.begin(); ijet != allak5jets_corr.end(); ++ijet) {
-			bJetVeto_pt->Fill(double(ijet->Pt()),evtwt_);
-			bJetVeto_eta->Fill(double(ijet->Eta()),evtwt_);
-			bJetVeto_CSV->Fill(double(ijet->CombinedSVBJetTags()),evtwt_);
-			if( leadPt<ijet->Pt() ){ 
-				lead=ii;
-				leadPt=ijet->Pt();
-			}
-			ii++;	
-		}
-		bJetVeto_lead_pt->Fill(double(allak5jets_corr[lead].Pt()),evtwt_);
-		bJetVeto_lead_eta->Fill(double(allak5jets_corr[lead].Eta()),evtwt_);
-		bJetVeto_lead_CSV->Fill(double(allak5jets_corr[lead].CombinedSVBJetTags()),evtwt_);
-
 
 		// Fill new tree, new branch
 		if( BuildMinTree_ ){
