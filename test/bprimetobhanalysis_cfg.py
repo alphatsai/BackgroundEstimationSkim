@@ -193,9 +193,7 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     HTSelParams         = defaultHTSelectionParameters.clone(),
     EvtSelParams        = defaultEventSelectionParameters.clone(),
 
-    JMEParams           = defaultJMEUncertUntilParameters.clone( 
-		FilenameJEC = cms.untracked.string('Summer13_V4_DATA_UncertaintySources_AK5PFchs.txt'), 
-       ), 
+    JMEParams           = defaultJMEUncertUntilParameters.clone(),
     JESShift            = cms.double(options.JESShift), 
     JERShift            = cms.double(options.JERShift), 
     SFbShift            = cms.double(options.SFbShift), 
@@ -205,5 +203,6 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     BuildMinTree        = cms.bool(True),
     ) 
 
+process.SimpleMemoryCheck = cms.Service("SimpleMemoryCheck",ignoreTotal = cms.untracked.int32(1) )
 process.p = cms.Path(process.BprimebH)
 
