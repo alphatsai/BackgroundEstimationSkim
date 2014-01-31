@@ -197,8 +197,8 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
 #    FatJetSelParams     = defaultFatJetSelectionParameters.clone(
 #	), 
     HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(
-    		fatJetMassMin       = cms.double(75),
-    		fatJetMassMax       = cms.double(200),
+    		fatJetMassMin       = cms.double(0.),
+    		fatJetMassMax       = cms.double(10000),
     		fatJetTau2ByTau1Max = cms.double(1.1),
     		subjet1CSVDiscMin   = cms.double(0),
     		subjet2CSVDiscMin   = cms.double(0),
@@ -206,9 +206,7 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     HTSelParams         = defaultHTSelectionParameters.clone(),
     EvtSelParams        = defaultEventSelectionParameters.clone(),
 
-    JMEParams           = defaultJMEUncertUntilParameters.clone( 
-		FilenameJEC = cms.untracked.string('Summer13_V4_DATA_UncertaintySources_AK5PFchs.txt'), 
-       ), 
+    JMEParams           = defaultJMEUncertUntilParameters.clone(),
     JESShift            = cms.double(options.JESShift), 
     JERShift            = cms.double(options.JERShift), 
     SFbShift            = cms.double(options.SFbShift), 
@@ -217,5 +215,6 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     #BuildMinTree        = cms.bool(False),
     BuildMinTree        = cms.bool(True),
     ) 
+process.SimpleMemoryCheck = cms.Service("SimpleMemoryCheck",ignoreTotal = cms.untracked.int32(1) )
 process.p = cms.Path(process.BprimebH)
 
