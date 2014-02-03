@@ -8,7 +8,7 @@ from inputFiles_cfi import *
 
 options = VarParsing('python')
 
-options.register('outFilename', 'test.root',
+options.register('outFilename', 'bprimeTobH.root',
     VarParsing.multiplicity.singleton,
     VarParsing.varType.string,
     "Output file name"

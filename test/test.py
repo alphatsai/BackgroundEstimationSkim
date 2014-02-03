@@ -6,18 +6,30 @@ from FWCore.ParameterSet.VarParsing import VarParsing
 #from BackgroundEstimationSkimv1.BackgroundEstimationSkim.Data.JetHT_Run2012BCD_cfi import * 
 from inputFiles_cfi import * 
 
+#FileNames = [
+##'file:BprimeTobH_v1_10_1_HIn.root'
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_10_1_HIn.root',
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_1_1_Pf5.root',
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_2_1_Y96.root',
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_3_1_h6K.root',
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_4_1_gI9.root',
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_5_1_QTk.root',
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_6_1_H6G.root',
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_7_1_YrU.root',
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_8_1_KTf.root',
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_9_1_G4q.root'
+#]
 FileNames = [
-#'file:BprimeTobH_v1_10_1_HIn.root'
-'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_10_1_HIn.root',
-'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_1_1_Pf5.root',
-'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_2_1_Y96.root',
-'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_3_1_h6K.root',
-'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_4_1_gI9.root',
-'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_5_1_QTk.root',
-'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_6_1_H6G.root',
-'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_7_1_YrU.root',
-'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_8_1_KTf.root',
-'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_9_1_G4q.root'
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_1_1_f05.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_2_1_nim.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_3_1_VVh.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_4_1_nCj.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_5_1_eyp.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_6_1_JhQ.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_7_1_rJB.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_8_1_V7X.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_9_1_mfe.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_10_1_zRk.root'
 ]
 
 options = VarParsing('python')
