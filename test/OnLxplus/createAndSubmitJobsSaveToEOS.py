@@ -82,7 +82,7 @@ exitcode=$?
 
 #cp -v OUTPUT_FILENAME.root DATASET_WORKDIR/output/OUTPUT_FILENAME_JOB_NUMBER.root
 #/afs/cern.ch/work/j/jtsai/myAna/bpTobH/BpbHDevel/CMSSW_5_3_13_patch2_Bpbh/src/BpbH/BackgroundEstimationSkim/test/OnLxplus/
-eosplace=`echo "DATASET_WORKDIR" | sed 's/\/afs\/cern.ch\/work\/j\/jtsai\/myAna\/bpTobH\/BprimeTobHSampleFilter\/CMSSW_5_3_13_patch3_skim\/src\/BpbH\/BackgroundEstimationSkim\/test\/OnLxplus\///g'`
+eosplace=`echo "DATASET_WORKDIR" | sed 's/\/afs\/cern.ch\/work\/j\/jtsai\/myAna\/bpTobH\/BprimeTobHSampleFilter\/CMSSW_5_3_13_patch3_bVeto\/src\/BpbH\/BackgroundEstimationSkim\/test\/OnLxplus\///g'`
 check=`/afs/cern.ch/project/eos/installation/0.3.4/bin/eos.select ls "eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$eosplace"` 
 if [ "$check" == "" ]; then
 	/afs/cern.ch/project/eos/installation/0.3.4/bin/eos.select mkdir -p "eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$eosplace"
