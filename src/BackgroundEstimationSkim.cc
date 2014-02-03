@@ -476,16 +476,15 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			++nAK5; 
 		}
 
+		delete myjets;
+		delete ak5jets_tmp;
+
 		if( ak5jets_corr->size()<2 ){
 			continue;
 			delete ak5jets_corr;
-			delete myjets;
-			delete ak5jets_tmp;
 		}else{	
 			cutFlow->Fill(double(4),evtwt_);
 			delete ak5jets_corr;
-			delete myjets;
-			delete ak5jets_tmp;
 		}
 		
 		//// Event selection  =================================================================================================================================== 
