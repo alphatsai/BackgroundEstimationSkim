@@ -72,6 +72,7 @@ eval `scram runtime -sh`
 
 cp -v MAIN_WORKDIR/CMSSW_cfg.py $BATCHDIR/CMSSW_cfg.py
 cp -v MAIN_WORKDIR/pileup*.root $BATCHDIR/
+cp -v MAIN_WORKDIR/*Uncertainty*.txt $BATCHDIR/
 cp -v DATASET_WORKDIR/input/inputFiles_JOB_NUMBER_cfi.py $BATCHDIR/inputFiles_cfi.py
 
 cd $BATCHDIR
@@ -81,7 +82,11 @@ exitcode=$?
 
 #cp -v OUTPUT_FILENAME.root DATASET_WORKDIR/output/OUTPUT_FILENAME_JOB_NUMBER.root
 #/afs/cern.ch/work/j/jtsai/myAna/bpTobH/BpbHDevel/CMSSW_5_3_13_patch2_Bpbh/src/BpbH/BackgroundEstimationSkim/test/OnLxplus/
-eosplace=`echo "DATASET_WORKDIR" | sed 's/\/afs\/cern.ch\/work\/j\/jtsai\/myAna\/bpTobH\/BpbHDevel\/CMSSW_5_3_13_patch2_Bpbh\/src\/BpbH\/BackgroundEstimationSkim\/test\/OnLxplus\///g'`
+eosplace=`echo "DATASET_WORKDIR" | sed 's/\/afs\/cern.ch\/work\/j\/jtsai\/myAna\/bpTobH\/BprimeTobHSampleFilter\/CMSSW_5_3_13_patch3_skim\/src\/BpbH\/BackgroundEstimationSkim\/test\/OnLxplus\///g'`
+check=`/afs/cern.ch/project/eos/installation/0.3.4/bin/eos.select ls "eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$eosplace"` 
+if [ "$check" == "" ]; then
+	/afs/cern.ch/project/eos/installation/0.3.4/bin/eos.select mkdir -p "eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$eosplace"
+fi
 cmsStage OUTPUT_FILENAME.root "/store/user/jtsai/bpTobH/backgroundEstimationSkim/$eosplace/OUTPUT_FILENAME_JOB_NUMBER.root"
 cp -v Evt_NoJets.txt DATASET_WORKDIR/output/Evt_NoJets_JOB_NUMBER.txt
 
@@ -143,6 +148,8 @@ def main():
     if not os.path.isfile(os.path.join(cfg_dirname,filename)):
       continue
     if re.search("^pileup.*\.root$", filename):
+      shutil.copy(os.path.join(cfg_dirname,filename),main_workdir)
+    if re.search(".*Uncertainty.*\.txt$", filename):
       shutil.copy(os.path.join(cfg_dirname,filename),main_workdir)
 
   # open and read the dataset_list file

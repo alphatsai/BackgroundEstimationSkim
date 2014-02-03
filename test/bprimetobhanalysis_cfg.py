@@ -8,7 +8,7 @@ from inputFiles_cfi import *
 
 options = VarParsing('python')
 
-options.register('outFilename', 'bprimeTobH.root',
+options.register('outFilename', 'test.root',
     VarParsing.multiplicity.singleton,
     VarParsing.varType.string,
     "Output file name"
@@ -18,7 +18,8 @@ options.register('reportEvery', 1000,
     VarParsing.varType.int,
     "Report every N events (default is N=1000)"
     )
-options.register('jetPtMin', 50.,
+#options.register('jetPtMin', 50.,
+options.register('jetPtMin', 30.,  #For bVeto
     VarParsing.multiplicity.singleton,
     VarParsing.varType.float,
     "Minimum jet Pt"
@@ -28,10 +29,17 @@ options.register('jetPtMax', 1.E6,
     VarParsing.varType.float,
     "Maximum jet Pt"
     )
-options.register('bJetPtMin', 80.,
+#options.register('bJetPtMin', 80.,
+options.register('bJetPtMin', 30., #For bVeto
     VarParsing.multiplicity.singleton,
     VarParsing.varType.float,
     "Minimum b jet Pt"
+    )
+#options.register('bJetCSV', 0.679,
+options.register('bJetCSV', 0.244, #For bVeto
+    VarParsing.multiplicity.singleton,
+    VarParsing.varType.float,
+    "CSV discriminate b jet"
     )
 options.register('fatJetPtMin', 300.,
     VarParsing.multiplicity.singleton,
@@ -98,12 +106,35 @@ options.register('hTMax', 1.E6,
     VarParsing.varType.float,
     "Maximum HT"
     )
-
+#####################################################
 options.register('doPUReweighting', True,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.bool,
     "Do pileup reweighting"
 )
+options.register('JESShift', 0.0,
+    VarParsing.multiplicity.singleton,
+    VarParsing.varType.float,
+    "JES shift in unit of sigmas" 
+    )
+options.register('JERShift', 0.0,
+    VarParsing.multiplicity.singleton,
+    VarParsing.varType.float,
+    "JER shift in unit of sigmas" 
+    )
+options.register('SFbShift', 0.0,
+    VarParsing.multiplicity.singleton,
+    VarParsing.varType.float,
+    "SFb shift in unit of sigmas" 
+    )
+options.register('SFlShift', 0.0,
+    VarParsing.multiplicity.singleton,
+    VarParsing.varType.float,
+    "SFl shift in unit of sigmas" 
+    )
+if options.SFbShift != 0.0 and options.SFlShift != 0.0: 
+  print "SFbshift = ",  options.SFbShift, " and SFlshift = ", options.SFlShift
+  print "Warning: must be varied independently."
 
 options.setDefault('maxEvents', -1000) 
 
@@ -118,44 +149,55 @@ process.MessageLogger.cout = cms.untracked.PSet(
 process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(1)
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) ) # Leave it this way. 
-
+#process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) ) # show cpu time
 process.source = cms.Source("EmptySource")
 
 process.TFileService = cms.Service("TFileService",
     fileName = cms.string(options.outFilename) 
     )
 
-from BpbH.BprimeTobH.TriggerSelector_cfi import * 
-from BpbH.BprimeTobH.HiggsJetSelector_cfi import * 
-from BpbH.BprimeTobH.HTSelector_cfi import * 
+#from BpbH.BprimeTobH.TriggerSelector_cfi import * 
+#from BpbH.BprimeTobH.HiggsJetSelector_cfi import * 
+#from BpbH.BprimeTobH.HTSelector_cfi import * 
 from BpbH.BprimeTobHAnalysis.EventSelector_cfi import * 
+from BpbH.BprimeTobHAnalysis.JMEUncertUntilParameters_cfi import * 
 
 process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     MaxEvents           = cms.int32(options.maxEvents),
     ReportEvery         = cms.int32(options.reportEvery),  
     InputTTree          = cms.string('ntuple/tree'),
     InputFiles          = cms.vstring(FileNames), 
-    #HLTPaths            = cms.vint32(3225,4136,4137,5089,5537,5538), 
     HLTPaths            = defaultTriggerSelectionParameters.clone(), 
     DoPUReweighting     = cms.bool(options.doPUReweighting),
     File_PUDistMC       = cms.string('pileup_Data_Summer12_53X_S10.root'),
     File_PUDistData     = cms.string('pileup_Data_Summer12_53X_S10.root'),
     Hist_PUDistMC       = cms.string('pileup_mc'),
     Hist_PUDistData     = cms.string('pileup_data'),
+	
+    JetPtMin            = cms.double(options.jetPtMin),
+    JetPtMax            = cms.double(options.jetPtMax),
+    BJetPtMin           = cms.double(options.bJetPtMin),
+    BJetCSV           	= cms.double(options.bJetCSV),
+
     JetSelParams        = defaultJetSelectionParameters.clone(
-		jetPtMin = cms.double(30)
-	), 
-    BJetSelParams       = defaultBJetSelectionParameters.clone(
-		jetCSVDiscMin = cms.double(0.244),	
-		jetPtMin = cms.double(30)
-	), #alpha 
-    FatJetSelParams     = defaultFatJetSelectionParameters.clone(), 
+		jetPtMin = cms.double(10)
+	),
+    BJetSelParams       = defaultBJetSelectionParameters.clone(),
+#    FatJetSelParams     = defaultFatJetSelectionParameters.clone(
+#	), 
     HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(), 
     HTSelParams         = defaultHTSelectionParameters.clone(),
     EvtSelParams        = defaultEventSelectionParameters.clone(),
-    #BuildMinTree        = cms.bool(True),
-    BuildMinTree        = cms.bool(False),
-    ) 
 
+    JMEParams           = defaultJMEUncertUntilParameters.clone(),
+    JESShift            = cms.double(options.JESShift), 
+    JERShift            = cms.double(options.JERShift), 
+    SFbShift            = cms.double(options.SFbShift), 
+    SFlShift            = cms.double(options.SFlShift),
+
+    #BuildMinTree        = cms.bool(False),
+    BuildMinTree        = cms.bool(True),
+    ) 
+process.SimpleMemoryCheck = cms.Service("SimpleMemoryCheck",ignoreTotal = cms.untracked.int32(1) )
 process.p = cms.Path(process.BprimebH)
 

@@ -49,8 +49,8 @@ options.register('bJetPtMin', 30., #For bVeto
     VarParsing.varType.float,
     "Minimum b jet Pt"
     )
-#options.register('bjetCSV', 0.679,
-options.register('bjetCSV', 0.244, #For bVeto
+#options.register('bJetCSV', 0.679,
+options.register('bJetCSV', 0.244, #For bVeto
     VarParsing.multiplicity.singleton,
     VarParsing.varType.float,
     "CSV discriminate b jet"
@@ -120,7 +120,7 @@ options.register('hTMax', 1.E6,
     VarParsing.varType.float,
     "Maximum HT"
     )
-
+#####################################################
 options.register('doPUReweighting', True,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.bool,
@@ -163,7 +163,7 @@ process.MessageLogger.cout = cms.untracked.PSet(
 process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(1)
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) ) # Leave it this way. 
-
+#process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) ) # show cpu time
 process.source = cms.Source("EmptySource")
 
 process.TFileService = cms.Service("TFileService",
@@ -191,23 +191,19 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     JetPtMin            = cms.double(options.jetPtMin),
     JetPtMax            = cms.double(options.jetPtMax),
     BJetPtMin           = cms.double(options.bJetPtMin),
-    BJetCSV           	= cms.double(options.bjetCSV),
+    BJetCSV           	= cms.double(options.bJetCSV),
 
     JetSelParams        = defaultJetSelectionParameters.clone(
 		jetPtMin = cms.double(10)
 	),
-    BJetSelParams       = defaultBJetSelectionParameters.clone(
-		jetCSVDiscMin = cms.double(0.244),	
-		jetPtMin = cms.double(30)
-	), #alpha 
-    FatJetSelParams     = defaultFatJetSelectionParameters.clone(), 
+    BJetSelParams       = defaultBJetSelectionParameters.clone(),
+#    FatJetSelParams     = defaultFatJetSelectionParameters.clone(
+#	), 
     HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(), 
     HTSelParams         = defaultHTSelectionParameters.clone(),
     EvtSelParams        = defaultEventSelectionParameters.clone(),
 
-    JMEParams           = defaultJMEUncertUntilParameters.clone( 
-		FilenameJEC = cms.untracked.string('Summer13_V4_DATA_UncertaintySources_AK5PFchs.txt'), 
-       ), 
+    JMEParams           = defaultJMEUncertUntilParameters.clone(),
     JESShift            = cms.double(options.JESShift), 
     JERShift            = cms.double(options.JERShift), 
     SFbShift            = cms.double(options.SFbShift), 
@@ -216,6 +212,6 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     #BuildMinTree        = cms.bool(False),
     BuildMinTree        = cms.bool(True),
     ) 
-
+process.SimpleMemoryCheck = cms.Service("SimpleMemoryCheck",ignoreTotal = cms.untracked.int32(1) )
 process.p = cms.Path(process.BprimebH)
 
