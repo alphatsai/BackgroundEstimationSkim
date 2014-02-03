@@ -319,7 +319,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 	FatJetSelector fatjetSelHiggs(higgsJetSelParame_);
 	JetSelector jetSelAK5(jetSelParams_); 
-	//JetSelector jetSelBJet(bjetSelParams_); 
 	pat::strbitset rethiggsjet = fatjetSelHiggs.getBitTemplate(); 
 	pat::strbitset retjetidak5 = jetSelAK5.getBitTemplate(); 
 
@@ -396,10 +395,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 		////  Higgs jets selection ================================================================================ 
 		vector<TLorentzVector> higgsJets;
-			//cout<<"================= CA8 ======"<<endl; 
-			//cout<<FatJetInfo.Size<<endl; 
 		for ( int i=0; i< FatJetInfo.Size; ++i ){
-			//cout<<"CSV out: "<<FatJetInfo.CombinedSVBJetTags[i]<<endl;
 			rethiggsjet.set(false);
 			if( fatjetSelHiggs( FatJetInfo, i, SubJetInfo, rethiggsjet)==0 ) continue; //higgs selection				
 			TLorentzVector jet;
@@ -480,40 +476,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			++nAK5; 
 		}
 
- 
-/*		//// Jet Correction: BTag
-		JetCollection* ak5jets_bTag_corr = new JetCollection;
-		if ( !isData_ ){
-			string algo;
-			if( bjetCSV_ == 0.244 ){ 
-				algo = "CSVL"; 
-			}else if( bjetCSV_ == 0.679 ){
-				algo = "CSVM"; 
-			}else if( bjetCSV_ == 0.898 ){
-				algo = "CSVT"; 
-			}else{
-				edm::LogError("ApplyBTagSF") << " Wrong b-tagging algo_ chosen: " << algo << ". Choose between CSVL:0.244, CSVM:0.679, or CSVT:0.898" ; 
-			}
-			ApplyBTagSF * btagsf =  new ApplyBTagSF(*ak5jets_corr, bjetCSV_, algo, SFbShift_, SFlShift_) ;  
-			*ak5jets_bTag_corr =  btagsf->getBtaggedJetsWithSF () ; 
-			delete btagsf ; 
-
-		}else{
-			ak5jets_bTag_corr = ak5jets_corr;
-		}
-
-		//// b Jet Selection
-		JetCollection* bjets_corr = new JetCollection;
-    		for (JetCollection::const_iterator ijet = ak5jets_bTag_corr->begin(); ijet != ak5jets_bTag_corr->end(); ++ijet) {
-			if( ijet->Pt() < bjetPtMin_ || ijet->CombinedSVBJetTags() < bjetCSV_ ) continue;  
-			bJet_pt->Fill(double(ijet->Pt()),evtwt_); 
-			bJet_eta->Fill(double(ijet->Eta()),evtwt_); 
-			bJet_CSV->Fill(double(ijet->CombinedSVBJetTags()),evtwt_);
-			bjets_corr->push_back(*ijet);
-			++nbjetsNoCA8; //// NO overlap with CA8  
-		}  
-		delete myjets;
-*/
 		if( ak5jets_corr->size()<2 ){
 			continue;
 			delete ak5jets_corr;
@@ -525,18 +487,11 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			delete myjets;
 			delete ak5jets_tmp;
 		}
-//		delete ak5jets_bTag_corr;
-//		delete bjets_corr;
 		
 		//// Event selection  =================================================================================================================================== 
 		AK5_num->Fill(double(nAK5),evtwt_);
 		bJet_num->Fill(double(nbjetsNoCA8),evtwt_);
 
-/*		if( higgsJets.size()<1 ) continue;
-		cutFlow->Fill(double(3),evtwt_);
-		if( nbjetsNoCA8<2 ) continue;
-		cutFlow->Fill(double(4),evtwt_);
-*/
 		//// Store new tree, new branch with Jet correction  ==================================================================================================== 
 		JetCollection* allak5jets = new JetCollection;
 		JetCollection* allak5jets_corr = new JetCollection;
@@ -563,24 +518,9 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			delete jmeUtil_jes ; 
 
 		}
-/*		//// 2. Jet Correction: BTag, (For bVeto, don't need to apply) 
-		ApplyBTagSF * btagCSVLsf =  new ApplyBTagSF(*allak5jets_corr, 0.244, "CSVL", SFbShift_, SFlShift_) ;  
-		ApplyBTagSF * btagCSVMsf =  new ApplyBTagSF(*allak5jets_corr, 0.679, "CSVM", SFbShift_, SFlShift_) ;  
-		ApplyBTagSF * btagCSVTsf =  new ApplyBTagSF(*allak5jets_corr, 0.898, "CSVT", SFbShift_, SFlShift_) ;  
-		const int allak5jets_num = allak5jets_corr->size();
-		bool passBTagCSVL[allak5jets_num], passBTagCSVM[allak5jets_num], passBTagCSVT[allak5jets_num];	
-		for( int ijet=0; ijet<allak5jets_num; ijet++){
-			passBTagCSVL[ijet] =  btagCSVLsf->getBtaggedSF(ijet); 
-			passBTagCSVM[ijet] =  btagCSVMsf->getBtaggedSF(ijet); 
-			passBTagCSVT[ijet] =  btagCSVTsf->getBtaggedSF(ijet); 
-		}
-		delete btagCSVLsf;
-		delete btagCSVMsf;
-		delete btagCSVTsf;
-*/
+
 		// Fill new tree, new branch
 		if( BuildMinTree_ ){
-			//cout<<entry<<endl;
 			if( isData_ ){
 				McFlag_=0;
 			}else{
@@ -593,11 +533,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			reRegistJet(*allak5jets_corr, newJetInfo);	
 			reRegistJet(FatJetInfo, newFatJetInfo);	
 			reRegistJet(SubJetInfo, newSubJetInfo);
-/*			for( int i=0; i<allak5jets_num; i++){
-				CSVLSF_[i] = passBTagCSVL[i];
-				CSVMSF_[i] = passBTagCSVM[i];
-				CSVTSF_[i] = passBTagCSVT[i];
-			}	*/
 			newtree->Fill();
 		}
 
