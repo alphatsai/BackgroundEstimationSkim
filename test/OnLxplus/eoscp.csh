@@ -4,6 +4,7 @@ if ( $2 == "" ) then
 	echo "Example: eoscp fileName eos/cms/store/user/jtsai/"
 	exit
 endif
+cmsenv
 xrdcp $1 xroot://eoscms.cern.ch//$2/$1
 echo ""
 echo "The files in $2 "
