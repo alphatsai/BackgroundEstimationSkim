@@ -87,7 +87,7 @@ check=`/afs/cern.ch/project/eos/installation/0.3.4/bin/eos.select ls "eos/cms/st
 if [ "$check" == "" ]; then
 	/afs/cern.ch/project/eos/installation/0.3.4/bin/eos.select mkdir -p "eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$eosplace"
 fi
-cmsStage OUTPUT_FILENAME.root "/store/user/jtsai/bpTobH/backgroundEstimationSkim/$eosplace/OUTPUT_FILENAME_JOB_NUMBER.root"
+cmsStage -f OUTPUT_FILENAME.root "/store/user/jtsai/bpTobH/backgroundEstimationSkim/$eosplace/OUTPUT_FILENAME_JOB_NUMBER.root"
 cp -v Evt_NoJets.txt DATASET_WORKDIR/output/Evt_NoJets_JOB_NUMBER.txt
 
 exit $exitcode
