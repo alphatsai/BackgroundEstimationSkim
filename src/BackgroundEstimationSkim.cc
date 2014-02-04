@@ -238,13 +238,16 @@ BackgroundEstimationSkim::~BackgroundEstimationSkim(){
 
 // ------------ method called once each job just before starting event loop  ------------
 void BackgroundEstimationSkim::beginJob(){ 
+		//std::cout<<"[Alpha] "<<" begin..."<<std::endl;
 	chain_  = new TChain(inputTTree_.c_str());
 
+		//std::cout<<"[Alpha] "<<" begin1"<<std::endl;
 	for(unsigned i=0; i<inputFiles_.size(); ++i){
 		chain_->Add(inputFiles_.at(i).c_str());
 		TFile *f = TFile::Open(inputFiles_.at(i).c_str(),"READ");
 		f->Close();
 	}
+		//std::cout<<"[Alpha] "<<" begin2"<<std::endl;
 
 	EvtInfo.Register(chain_);
 	VtxInfo.Register(chain_);
@@ -253,6 +256,7 @@ void BackgroundEstimationSkim::beginJob(){
 	FatJetInfo.Register(chain_,"FatJetInfo");
 	SubJetInfo.Register(chain_,"SubJetInfo");
 
+		//std::cout<<"[Alpha] "<<" begin3"<<std::endl;
         if( BuildMinTree_ ) {
 		newtree = fs->make<TTree>("tree", "") ; 
 		newtree->Branch("EvtInfo.EvtNum", &evtNum_, "EvtInfo.EvtNum/I"); // Store weight of Evt and PU for each event
@@ -265,6 +269,7 @@ void BackgroundEstimationSkim::beginJob(){
 		newSubJetInfo.RegisterTree(newtree,"SubJetInfo");
 	}
 
+		//std::cout<<"[Alpha] "<<" begin4"<<std::endl;
 	if(  maxEvents_<0 || maxEvents_>chain_->GetEntries()) maxEvents_ = chain_->GetEntries();
 
 	Evt_num		= fs->make<TH1D>("EvtInfo.Entries",	"", 1,   0, 1); 
@@ -298,6 +303,7 @@ void BackgroundEstimationSkim::beginJob(){
 	cutFlow->GetXaxis()->SetBinLabel(2,"Trigger_Sel");	
 	cutFlow->GetXaxis()->SetBinLabel(3,"Vertex_Sel");	
 	cutFlow->GetXaxis()->SetBinLabel(4,"bVeto_noWt");	
+		//std::cout<<"[Alpha] "<<" begin5"<<std::endl;
 
 	return;  
 
@@ -308,12 +314,15 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 	using namespace edm;
 	using namespace std;
 
+		//cout<<"[Alpha] "<<" Analyze"<<endl;
 	if(  chain_ == 0) return;
 
 	FatJetSelector fatjetSelHiggs(higgsJetSelParame_);
 	JetSelector jetSelAK5(jetSelParams_); 
 	pat::strbitset rethiggsjet = fatjetSelHiggs.getBitTemplate(); 
 	pat::strbitset retjetidak5 = jetSelAK5.getBitTemplate(); 
+
+		//cout<<"[Alpha] "<<" Analyze"<<endl;
 
 	ofstream fout("Evt_NoJets.txt"); 
 	if(  isData_ ){
@@ -322,30 +331,38 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 	edm::LogInfo("StartingAnalysisLoop") << "Starting analysis loop\n";
 	
+		//cout<<"[Alpha] "<<" Analyze"<<endl;
 	//// Roop events ==================================================================================================	
 	for(int entry=0; entry<maxEvents_; entry++){
 		if( (entry%reportEvery_) == 0) edm::LogInfo("Event") << entry << " of " << maxEvents_;
 		chain_->GetEntry(entry);
 		Evt_num->Fill(0);
-
+		
 		//// Event variables 
-		std::vector<TLorentzVector>p4_Jets; 
-		std::vector<TLorentzVector>p4_bJets; 
+//		std::vector<TLorentzVector>p4_Jets; 
+//		std::vector<TLorentzVector>p4_bJets; 
+
+		//cout<<"[Alpha] "<<entry<<" Start..."<<endl;
 
 		bool passHLT(false); 
 		int nGoodVtxs(0);
 		int nAK5(0); 
 		int nbjets(0); 
 
+		//cout<<"[Alpha] "<<entry<<" Start1"<<endl;
 		isData_  = EvtInfo.McFlag ? 0 : 1; 
+		//cout<<"[Alpha] "<<entry<<" Start2"<<endl;
 		if( !isData_ ) evtwt_    = EvtInfo.Weight; 
 		if( doPUReweighting_ && !isData_ ) puweight_ = LumiWeights_.weight(EvtInfo.TrueIT[0]); 
 		evtwt_ *= puweight_; 
+		//cout<<"[Alpha] "<<entry<<" Start3"<<endl;
 
-    		JetCollection* ak5jets_corr = new JetCollection;
+    		JetCollection ak5jets_corr;
+		//cout<<"[Alpha] "<<entry<<" Start4"<<endl;
  
 		//// Higgs BR reweighting, for b'b'>bHbH sample
 		if ( !isData_ ) {
+		//cout<<"[Alpha] "<<entry<<" NO:1"<<endl;
 			//int nbprimeBH(0), nbprimeBZ(0), nbprimeTW(0); 
 			for (int igen=0; igen < GenInfo.Size; ++igen) {
 				if ( GenInfo.Status[igen] == 3 && TMath::Abs(GenInfo.PdgID[igen]) == 25 && GenInfo.nDa[igen] >= 2 ) { //// H found
@@ -371,12 +388,14 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		//// Trigger selection =====================================================================================
 		TriggerSelector trigSel(hltPaths_); 
 		passHLT = trigSel.getTrigDecision(EvtInfo); 
+		//cout<<"[Alpha] "<<entry<<" Triger"<<endl;
 		if( !passHLT ) continue; 
 		cutFlow->Fill(double(1),evtwt_);
 
 		//// Vertex selection =====================================================================================
 		VertexSelector vtxSel(VtxInfo); 
 		nGoodVtxs = vtxSel.NGoodVtxs(); 
+		//cout<<"[Alpha] "<<entry<<" Vetex"<<endl;
 		if( nGoodVtxs < 1){ edm::LogInfo("NoGoodPrimaryVertex") << " No good primary vertex "; continue; }
 		cutFlow->Fill(double(2),evtwt_);
 
@@ -387,8 +406,10 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 		////  Higgs jets selection ================================================================================ 
 		vector<TLorentzVector> higgsJets;
+		//cout<<"[Alpha] "<<entry<<" Higgs..."<<endl;
 		for ( int i=0; i< FatJetInfo.Size; ++i ){
 			rethiggsjet.set(false);
+		//cout<<"[Alpha] "<<entry<<" Higgs "<<i<<endl;
 			if( fatjetSelHiggs( FatJetInfo, i, SubJetInfo, rethiggsjet)==0 ) continue; //higgs selection				
 			TLorentzVector jet;
 			jet.SetPtEtaPhiM(FatJetInfo.Pt[i], FatJetInfo.Eta[i], FatJetInfo.Phi[i], FatJetInfo.Mass[i]);
@@ -400,6 +421,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			Higgs_mass->Fill(FatJetInfo.Mass[i]);
 
 			if ( !isData_ ) { //// Apply Higgs-tagging scale factor 
+		//cout<<"[Alpha] "<<entry<<" NO:2"<<endl;
 				int iSubJet1 = FatJetInfo.Jet_SubJet1Idx[i];
 				int iSubJet2 = FatJetInfo.Jet_SubJet2Idx[i];
 				ApplyHiggsTagSF* higgsTagSF = new ApplyHiggsTagSF(double(SubJetInfo.Pt[iSubJet1]), double(SubJetInfo.Pt[iSubJet2]), 
@@ -415,7 +437,9 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		//// AK5 and bJet selection ================================================================================
 		//// Preselection for AK5 Jet 
     		JetCollection* myjets = new JetCollection;
+		//cout<<"[Alpha] "<<entry<<" AK5... "<<endl;
 		for ( int i=0; i<JetInfo.Size; ++i ){ 
+		//cout<<"[Alpha] "<<entry<<" AK5 "<<i<<endl;
 			retjetidak5.set(false);
 			bool overlapWithCA8(false); 
 			if( jetSelAK5(JetInfo, i, retjetidak5) == 0 ) continue; // AK5 pre-selection
@@ -435,6 +459,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		//// Jet Correction: JER, JES
 		JetCollection* ak5jets_tmp = new JetCollection; 
 		if ( !isData_) {
+		//cout<<"[Alpha] "<<entry<<" NO:3"<<endl;
 			// Only AK5 jets not overlapping with Higgs jets 
 			JMEUncertUtil* jmeUtil_jer = new JMEUncertUtil(jmeParams_, EvtInfo, *myjets, "JER", jerShift_) ; 
 			JetCollection* ak5jets_jer = new JetCollection;
@@ -447,10 +472,12 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			delete ak5jets_jer;
 		}
 		else {
+		//cout<<"[Alpha] "<<entry<<" JER JES 1..."<<endl;
 			// Only AK5 jets not overlapping with Higgs jets 
 			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *myjets, "JESAK5DATA", jesShift_) ; 
 			*ak5jets_tmp = jmeUtil_jes->GetModifiedJetColl() ; 
 			delete jmeUtil_jes ; 
+		//cout<<"[Alpha] "<<entry<<" JER JES 1"<<endl;
 		}
 		delete myjets;
 
@@ -460,7 +487,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			AK5_pt->Fill(double(ijet->Pt()),evtwt_); 
 			AK5_eta->Fill(double(ijet->Eta()),evtwt_); 
 			AK5_CSV->Fill(double(ijet->CombinedSVBJetTags()),evtwt_);
-      			ak5jets_corr->push_back(*ijet);
+      			ak5jets_corr.push_back(*ijet);
 			++nAK5; 
 		}
 		delete ak5jets_tmp;
@@ -469,6 +496,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		//// Jet Correction: BTag
 		JetCollection* ak5jets_bTag_corr = new JetCollection;
 		if ( !isData_ ){
+		//cout<<"[Alpha] "<<entry<<" NO:4"<<endl;
 			string algo;
 			if( bjetCSV_ == 0.244 ){ 
 				algo = "CSVL"; 
@@ -479,14 +507,16 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			}else{
 				edm::LogError("ApplyBTagSF") << " Wrong b-tagging algo_ chosen: " << algo << ". Choose between CSVL:0.244, CSVM:0.679, or CSVT:0.898" ; 
 			}
-			ApplyBTagSF * btagsf =  new ApplyBTagSF(*ak5jets_corr, bjetCSV_, algo, SFbShift_, SFlShift_) ;  
+			ApplyBTagSF * btagsf =  new ApplyBTagSF(ak5jets_corr, bjetCSV_, algo, SFbShift_, SFlShift_) ;  
 			*ak5jets_bTag_corr =  btagsf->getBtaggedJetsWithSF () ; 
 			delete btagsf ; 
 
 		}else{
-			ak5jets_bTag_corr = ak5jets_corr;
+		//cout<<"[Alpha] "<<entry<<" BTag 1..."<<endl;
+			*ak5jets_bTag_corr = ak5jets_corr;
+		//cout<<"[Alpha] "<<entry<<" BTag 1"<<endl;
 		}
-		delete ak5jets_corr;
+//		delete ak5jets_corr;
 
 		//// b Jet Selection
     		for (JetCollection::const_iterator ijet = ak5jets_bTag_corr->begin(); ijet != ak5jets_bTag_corr->end(); ++ijet) {
@@ -499,6 +529,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		delete ak5jets_bTag_corr;
 		bJet_num->Fill(nbjets);
 	
+		//cout<<"[Alpha] "<<entry<<" Bveto"<<endl;
 		if( nbjets>0 ) continue;
 		cutFlow->Fill(3);
 			
@@ -512,6 +543,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 		//// 1. Jet Correction: JER, JES
 		if ( !isData_) {
+		//cout<<"[Alpha] "<<entry<<" NO:5"<<endl;
 			// Only AK5 jets not overlapping with Higgs jets 
 			JMEUncertUtil* jmeUtil_jer = new JMEUncertUtil(jmeParams_, EvtInfo, *allak5jets, "JER", jerShift_) ; 
 			JetCollection* allak5jets_jer = new JetCollection;
@@ -523,10 +555,12 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			delete jmeUtil_jes;
 			delete allak5jets_jer; 
 		}else {
+		//cout<<"[Alpha] "<<entry<<" JER JES 2..."<<endl;
 			// Only AK5 jets not overlapping with Higgs jets 
 			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *allak5jets, "JESAK5DATA", jesShift_) ; 
 			*allak5jets_corr = jmeUtil_jes->GetModifiedJetColl() ; 
 			delete jmeUtil_jes ; 
+		//cout<<"[Alpha] "<<entry<<" JER JES 2"<<endl;
 
 		}
 		delete allak5jets;
@@ -534,21 +568,33 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		// Fill new tree, new branch
 		if( BuildMinTree_ ){
 			if( isData_ ){
+		//cout<<"[Alpha] "<<entry<<" tree 1"<<endl;
 				McFlag_=0;
 			}else{
+		//cout<<"[Alpha] "<<entry<<" NO:6"<<endl;
 				McFlag_=1;
 			}
+		//cout<<"[Alpha] "<<entry<<" tree 2"<<endl;
 			evtwtPu_ = evtwt_;
+		//cout<<"[Alpha] "<<entry<<" tree 3"<<endl;
 			evtNum_	 = maxEvents_;
+		//cout<<"[Alpha] "<<entry<<" tree 4"<<endl;
 			evtwtHiggsTagCorr_ = higgsTagCorr_;
+		//cout<<"[Alpha] "<<entry<<" tree 5"<<endl;
 			reRegistGen(GenInfo, newGenInfo); 	
+		//cout<<"[Alpha] "<<entry<<" tree 6"<<endl;
 			reRegistJet(*allak5jets_corr, newJetInfo);	
+		//cout<<"[Alpha] "<<entry<<" tree 7"<<endl;
 			reRegistJet(FatJetInfo, newFatJetInfo);	
+		//cout<<"[Alpha] "<<entry<<" tree 8"<<endl;
 			reRegistJet(SubJetInfo, newSubJetInfo);
+		//cout<<"[Alpha] "<<entry<<" tree 9"<<endl;
 			newtree->Fill();
+		//cout<<"[Alpha] "<<entry<<" tree10"<<endl;
 		}
 
 		delete allak5jets_corr;
+		//cout<<"[Alpha] "<<entry<<" End"<<endl;
 	} //// entry loop 
 
 	fout.close(); 

@@ -31,14 +31,16 @@ cd $1
 		set notDone=0
 		echo "==================================================================================="
 		echo "$sample"
-		set killedJobs=`grep Killed $sample/output/*.log | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
-		set killedNum=`echo $killedJobs | wc -w `
+		set killedJobs=`grep Killed $sample/output/*.log | grep -v 'cpu usage'| sed 's/.*job_\(.*\)\.sh.*/\1/g'`
+		set kCPUJobs=`grep Killed $sample/output/*.log | grep 'cpu usage' | sed 's/.*job_\(.*\)\.log.*/\1/g'`
 		set abJobs=`grep Aborted $sample/output/*.log | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
+		set kCPUNum=`echo $kCPUJobs | wc -w `
+		set killedNum=`echo $killedJobs | wc -w `
 		set abNum=`echo $abJobs | wc -w `
 		set jobNum=`ls -l $sample/input | grep '.sh' | wc -l`
 		set doneJobs=`/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select ls eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample | grep root | sed 's/bprimeTobH_\(.*\)\.root/\1/g'` 
 		set doneNum=`echo $doneJobs | wc -w`	
-		set realdoneNum=`echo $doneNum'-'$killedNum'-'$abNum | bc`	
+		set realdoneNum=`echo $doneNum'-'$killedNum'-'$abNum'-'$kCPUNum | bc`	
 		echo "Status(root): $doneNum/$jobNum"
 		echo "Status(real): $realdoneNum/$jobNum"
 		if ( $doneNum == 0 ) then
@@ -69,6 +71,9 @@ cd $1
 		if ( $killedNum != 0 ) then
 			echo "Killed Jobs: "$killedJobs 
 		endif
+		if ( $kCPUNum != 0 ) then
+			echo "CPU long Jobs: "$kCPUJobs 
+		endif
 		if ( $abNum != 0 ) then
 			echo "Aborted Jobs: "$abJobs 
 		endif
@@ -87,6 +92,14 @@ cd $1
 				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$kn.root
 				echo resubmit job_$kn.sh...
 				bsub -q 1nh -o $nowPath/$sample/output/job_$kn.log source $nowPath/$sample/input/job_$kn.sh
+			end	
+		endif
+		if ( $2 == 'reSubmit' && $kCPUNum != 0 ) then
+			foreach kcn($killedJobs)
+				mv $nowPath/$sample/output/job_$kcn.log $nowPath/$sample
+				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$kcn.root
+				echo resubmit job_$kcn.sh...
+				bsub -q 1nh -o $nowPath/$sample/output/job_$kcn.log source $nowPath/$sample/input/job_$kcn.sh
 			end	
 		endif
 		if ( $2 == 'reSubmit' && $abNum != 0 ) then
