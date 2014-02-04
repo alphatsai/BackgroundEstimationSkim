@@ -33,15 +33,17 @@ cd $1
 		echo "$sample"
 		set killedJobs=`grep Killed $sample/output/*.log | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
 		set killedNum=`echo $killedJobs | wc -w `
+		set abJobs=`grep Aborted $sample/output/*.log | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
+		set abNum=`echo $abJobs | wc -w `
 		set jobNum=`ls -l $sample/input | grep '.sh' | wc -l`
 		set doneJobs=`/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select ls eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample | grep root | sed 's/bprimeTobH_\(.*\)\.root/\1/g'` 
 		set doneNum=`echo $doneJobs | wc -w`	
-		set realdoneNum=`echo $doneNum'-'$killedNum | bc`	
+		set realdoneNum=`echo $doneNum'-'$killedNum'-'$abNum | bc`	
 		echo "Status(root): $doneNum/$jobNum"
 		echo "Status(real): $realdoneNum/$jobNum"
 		if ( $doneNum == 0 ) then
 			echo "Nothing output..."	
-		else if ( $doneNum == $jobNum ) then
+		else if ( $realdoneNum == $jobNum ) then
 			echo "Done!"	
 		else
 			while ( $i < $jobNum )
@@ -66,6 +68,9 @@ cd $1
 		endif
 		if ( $killedNum != 0 ) then
 			echo "Killed Jobs: "$killedJobs 
+		endif
+		if ( $abNum != 0 ) then
+			echo "Aborted Jobs: "$abJobs 
 		endif
 		rm -f tmp_.log
 
