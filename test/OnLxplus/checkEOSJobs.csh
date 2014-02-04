@@ -10,6 +10,11 @@ if ( ! ( -e $1 ) ) then
 endif
 
 cmsenv
+set start=`/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select ls eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim | grep $1`
+if ( $start == "" ) then
+	echo "Nothing output..."
+	exit
+endif
 set nowPath=`pwd`
 cd $1
 	rm -f tmp_.log
