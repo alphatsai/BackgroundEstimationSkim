@@ -34,21 +34,25 @@ cd $1
 		else if ( $doneNum == $jobNum ) then
 			echo "Done!"	
 		else
-			set done=0
-			foreach job($doneJobs)	
-				if ( $i == $job ) then
-					set done=1	
+			while ( $i < $jobNum )
+				set done=0
+				#echo $doneJobs
+				foreach job($doneJobs)	
+					if ( $i == $job ) then
+						set done=1	
+					endif	
+				end
+				if ( $done == 0 ) then
+					#echo $i
+					echo $i >> tmp_.log
+					@ notDone++ 
 				endif	
+				@ i++
 			end
-			if ( $done == 0 ) then
-				echo $i >> tmp_.log
-				@ notDone++ 
-			endif	
-			@ i++
 		endif
 		if ( $notDone != 0 ) then
 			set notDone=`cat tmp_.log`	
-			echo $notDone 
+			echo "No root: "$notDone 
 		endif
 		rm -f tmp_.log
 	end
