@@ -31,11 +31,21 @@ from inputFiles_cfi import *
 #    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_9_1_mfe.root',
 #    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_10_1_zRk.root'
 #]
+#FileNames = [
+#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_86_1_aXM.root',
+#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_87_1_S4O.root',
+#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_88_1_0vB.root',
+#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_89_1_hm3.root',
+#]
 FileNames = [
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_86_1_aXM.root',
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_87_1_S4O.root',
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_88_1_0vB.root',
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_89_1_hm3.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_177_1_pO2.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_178_1_i2v.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_179_1_Lry.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_180_1_xz0.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_181_1_08Q.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_182_1_GoO.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_183_1_4Lg.root',
+    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_184_1_lxc.root'
 ]
 
 options = VarParsing('python')

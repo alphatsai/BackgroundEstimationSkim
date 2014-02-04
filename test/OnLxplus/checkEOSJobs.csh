@@ -84,8 +84,17 @@ cd $1
 		if ( $2 == 'reSubmit' && $killedNum != 0 ) then
 			foreach kn($killedJobs)
 				mv $nowPath/$sample/output/job_$kn.log $nowPath/$sample
+				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$kn.root
 				echo resubmit job_$kn.sh...
 				bsub -q 1nh -o $nowPath/$sample/output/job_$kn.log source $nowPath/$sample/input/job_$kn.sh
+			end	
+		endif
+		if ( $2 == 'reSubmit' && $abNum != 0 ) then
+			foreach an($abJobs)
+				mv $nowPath/$sample/output/job_$an.log $nowPath/$sample
+				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$an.root
+				echo resubmit job_$an.sh...
+				bsub -q 1nh -o $nowPath/$sample/output/job_$an.log source $nowPath/$sample/input/job_$an.sh
 			end	
 		endif
 	end
