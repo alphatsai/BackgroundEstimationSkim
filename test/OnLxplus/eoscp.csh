@@ -5,7 +5,7 @@ if ( $2 == "" ) then
 	exit
 endif
 cmsenv
-xrdcp $1 xroot://eoscms.cern.ch//$2/$1
+xrdcp -f $1 xroot://eoscms.cern.ch//$2/$1
 echo ""
 echo "The files in $2 "
 eos ls -l $2
