@@ -1,4 +1,9 @@
 #/bin/tcsh
+echo "#############################################"
+echo "###                                       ###"
+echo "###  ./checkEOSJob.csh [name] <reSubmit>  ###"
+echo "###                                       ###"
+echo "#############################################"
 if ( $1 == "" ) then
 	echo "ERROR: Please input work folder name."
 	echo "Ex: ./checkEOSJobs.csh [name]"
@@ -15,8 +20,9 @@ if ( $start == "" ) then
 	echo "Nothing output..."
 	exit
 endif
-set nowPath=`pwd`
+
 cd $1
+	set nowPath=`pwd`
 	rm -f tmp_.log
 	set sampleName=`cat datasetList.txt | grep -v '#' | awk '{print $1}' | sed 's/^\///g' | sed 's/\//__/g'`
 	foreach sample($sampleName)
@@ -62,6 +68,21 @@ cd $1
 			echo "Killed Jobs: "$killedJobs 
 		endif
 		rm -f tmp_.log
+
+		if ( $2 == 'reSubmit' && $notDone != 0 ) then
+			foreach nn($notDonelist)
+				mv $nowPath/$sample/output/job_$nn.log $nowPath/$sample
+				echo resubmit job_$nn.sh...
+				bsub -q 1nh -o $nowPath/$sample/output/job_$nn.log source $nowPath/$sample/input/job_$nn.sh
+			end	
+		endif
+		if ( $2 == 'reSubmit' && $killedNum != 0 ) then
+			foreach kn($killedJobs)
+				mv $nowPath/$sample/output/job_$kn.log $nowPath/$sample
+				echo resubmit job_$kn.sh...
+				bsub -q 1nh -o $nowPath/$sample/output/job_$kn.log source $nowPath/$sample/input/job_$kn.sh
+			end	
+		endif
 	end
 	rm -f tmp_.log
 cd -
