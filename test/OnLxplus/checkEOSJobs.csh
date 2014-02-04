@@ -25,10 +25,14 @@ cd $1
 		set notDone=0
 		echo "==================================================================================="
 		echo "$sample"
+		set killedJobs=`grep Killed $sample/output/*.log | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
+		set killedNum=`echo $killedJobs | wc -w `
 		set jobNum=`ls -l $sample/input | grep '.sh' | wc -l`
 		set doneJobs=`/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select ls eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample | grep root | sed 's/bprimeTobH_\(.*\)\.root/\1/g'` 
 		set doneNum=`echo $doneJobs | wc -w`	
-		echo "Status: $doneNum/$jobNum"
+		set realdoneNum=`echo $doneNum'-'$killedNum | bc`	
+		echo "Status(root): $doneNum/$jobNum"
+		echo "Status(real): $realdoneNum/$jobNum"
 		if ( $doneNum == 0 ) then
 			echo "Nothing output..."	
 		else if ( $doneNum == $jobNum ) then
@@ -51,8 +55,11 @@ cd $1
 			end
 		endif
 		if ( $notDone != 0 ) then
-			set notDone=`cat tmp_.log`	
-			echo "No root: "$notDone 
+			set notDonelist=`cat tmp_.log`	
+			echo "No root Jobs: "$notDonelist 
+		endif
+		if ( $killedNum != 0 ) then
+			echo "Killed Jobs: "$killedJobs 
 		endif
 		rm -f tmp_.log
 	end
