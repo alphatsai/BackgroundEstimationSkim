@@ -71,11 +71,11 @@ cd $1
 			set notDonelist=`cat tmp_.log`	
 			echo "No root Jobs: "$notDonelist 
 		endif
-		if ( $killedNum != 0 ) then
-			echo "Killed Jobs: "$killedJobs 
-		endif
 		if ( $kCPUNum != 0 ) then
 			echo "CPU long Jobs: "$kCPUJobs 
+		endif
+		if ( $killedNum != 0 ) then
+			echo "Killed Jobs: "$killedJobs 
 		endif
 		if ( $abNum != 0 ) then
 			echo "Aborted Jobs: "$abJobs 
