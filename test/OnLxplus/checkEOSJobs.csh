@@ -35,16 +35,18 @@ cd $1
 		echo "$sample"
 		set killedJobs=`grep Killed $sample/output/*.log | grep -v 'cpu usage'| sed 's/.*job_\(.*\)\.sh.*/\1/g'`
 		set kCPUJobs=`grep Killed $sample/output/*.log | grep 'cpu usage' | sed 's/.*job_\(.*\)\.log.*/\1/g'`
-		set kCPUJobs2=`grep Killed $sample/output/*.log | grep 'CPU time limit exceeded' | sed 's/.*job_\(.*\)\.log.*/\1/g'`
+		set kCPUJobs2=`grep 'CPU time limit exceeded' $sample/output/*.log | grep 'sh:Exited' | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
+		set kCPUJobs3=`grep 'CPU time limit exceeded' $sample/output/*.log | grep 'sh: line' | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
 		set abJobs=`grep Aborted $sample/output/*.log | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
 		set kCPUNum=`echo $kCPUJobs | wc -w `
 		set kCPUNum2=`echo $kCPUJobs2 | wc -w `
+		set kCPUNum3=`echo $kCPUJobs3 | wc -w `
 		set killedNum=`echo $killedJobs | wc -w `
 		set abNum=`echo $abJobs | wc -w `
 		set jobNum=`ls -l $sample/input | grep '.sh' | wc -l`
 		set doneJobs=`/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select ls eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample | grep root | sed 's/bprimeTobH_\(.*\)\.root/\1/g'` 
 		set doneNum=`echo $doneJobs | wc -w`	
-		set realdoneNum=`echo $doneNum'-'$killedNum'-'$abNum'-'$kCPUNum2 | bc`	
+		set realdoneNum=`echo $doneNum'-'$killedNum'-'$abNum'-'$kCPUNum2'-'$kCPUNum3 | bc`	
 		echo "Status(root): $doneNum/$jobNum"
 		echo "Status(real): $realdoneNum/$jobNum"
 		if ( $doneNum == 0 ) then
@@ -76,8 +78,8 @@ cd $1
 		if ( $kCPUNum != 0 ) then
 			echo "CPU Use Jobs: "$kCPUJobs 
 		endif
-		if ( $kCPUNum2 != 0 ) then
-			echo "CPU Time Jobs: "$kCPUJobs2 
+		if ( $kCPUNum2 != 0 || $kCPUNum3 != 0 ) then
+			echo "CPU Time Jobs: "$kCPUJobs2 $kCPUJobs3 
 		endif
 		if ( $killedNum != 0 ) then
 			echo "Killed Jobs: "$killedJobs 
@@ -103,11 +105,19 @@ cd $1
 			end	
 		endif
 		if ( $2 == 'reSubmit' && $kCPUNum2 != 0 ) then
-			foreach kcn($kCPUjobs2)
+			foreach kcn($kCPUJobs2)
 				mv $nowPath/$sample/output/job_$kcn.log $nowPath/$sample
 				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$kcn.root
 				echo resubmit job_$kcn.sh...
 				bsub -q 8nh -o $nowPath/$sample/output/job_$kcn.log source $nowPath/$sample/input/job_$kcn.sh
+			end	
+		endif
+		if ( $2 == 'reSubmit' && $kCPUNum3 != 0 ) then
+			foreach kcn3($kCPUJobs3)
+				mv $nowPath/$sample/output/job_$kcn3.log $nowPath/$sample
+				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$kcn3.root
+				echo resubmit job_$kcn3.sh...
+				bsub -q 8nh -o $nowPath/$sample/output/job_$kcn3.log source $nowPath/$sample/input/job_$kcn3.sh
 			end	
 		endif
 		if ( $2 == 'reSubmit' && $abNum != 0 ) then
