@@ -25,11 +25,13 @@ cd $1
 	set nowPath=`pwd`
 	rm -f tmp_.log
 	set sampleName=`cat datasetList.txt | grep -v '#' | awk '{print $1}' | sed 's/^\///g' | sed 's/\//__/g'`
+	set total=`echo $sampleName | wc -w`
+	set doneS=0
 	foreach sample($sampleName)
 		touch tmp_.log
 		set i=0
 		set notDone=0
-		echo "==================================================================================="
+		echo "============================================================================================="
 		echo "$sample"
 		set killedJobs=`grep Killed $sample/output/*.log | grep -v 'cpu usage'| sed 's/.*job_\(.*\)\.sh.*/\1/g'`
 		set kCPUJobs=`grep Killed $sample/output/*.log | grep 'cpu usage' | sed 's/.*job_\(.*\)\.log.*/\1/g'`
@@ -40,12 +42,13 @@ cd $1
 		set jobNum=`ls -l $sample/input | grep '.sh' | wc -l`
 		set doneJobs=`/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select ls eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample | grep root | sed 's/bprimeTobH_\(.*\)\.root/\1/g'` 
 		set doneNum=`echo $doneJobs | wc -w`	
-		set realdoneNum=`echo $doneNum'-'$killedNum'-'$abNum'-'$kCPUNum | bc`	
+		set realdoneNum=`echo $doneNum'-'$killedNum'-'$abNum | bc`	
 		echo "Status(root): $doneNum/$jobNum"
 		echo "Status(real): $realdoneNum/$jobNum"
 		if ( $doneNum == 0 ) then
 			echo "Nothing output..."	
 		else if ( $realdoneNum == $jobNum ) then
+			@ doneS++
 			echo "Done!"	
 		else
 			while ( $i < $jobNum )
@@ -83,7 +86,7 @@ cd $1
 			foreach nn($notDonelist)
 				mv $nowPath/$sample/output/job_$nn.log $nowPath/$sample
 				echo resubmit job_$nn.sh...
-				bsub -q 1nh -o $nowPath/$sample/output/job_$nn.log source $nowPath/$sample/input/job_$nn.sh
+				bsub -q 8nh -o $nowPath/$sample/output/job_$nn.log source $nowPath/$sample/input/job_$nn.sh
 			end	
 		endif
 		if ( $2 == 'reSubmit' && $killedNum != 0 ) then
@@ -91,26 +94,28 @@ cd $1
 				mv $nowPath/$sample/output/job_$kn.log $nowPath/$sample
 				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$kn.root
 				echo resubmit job_$kn.sh...
-				bsub -q 1nh -o $nowPath/$sample/output/job_$kn.log source $nowPath/$sample/input/job_$kn.sh
+				bsub -q 8nh -o $nowPath/$sample/output/job_$kn.log source $nowPath/$sample/input/job_$kn.sh
 			end	
 		endif
-		if ( $2 == 'reSubmit' && $kCPUNum != 0 ) then
-			foreach kcn($killedJobs)
-				mv $nowPath/$sample/output/job_$kcn.log $nowPath/$sample
-				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$kcn.root
-				echo resubmit job_$kcn.sh...
-				bsub -q 1nh -o $nowPath/$sample/output/job_$kcn.log source $nowPath/$sample/input/job_$kcn.sh
-			end	
-		endif
+#		if ( $2 == 'reSubmit' && $kCPUNum != 0 ) then
+#			foreach kcn($killedJobs)
+#				mv $nowPath/$sample/output/job_$kcn.log $nowPath/$sample
+#				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$kcn.root
+#				echo resubmit job_$kcn.sh...
+#				bsub -q 8nh -o $nowPath/$sample/output/job_$kcn.log source $nowPath/$sample/input/job_$kcn.sh
+#			end	
+#		endif
 		if ( $2 == 'reSubmit' && $abNum != 0 ) then
 			foreach an($abJobs)
 				mv $nowPath/$sample/output/job_$an.log $nowPath/$sample
 				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$an.root
 				echo resubmit job_$an.sh...
-				bsub -q 1nh -o $nowPath/$sample/output/job_$an.log source $nowPath/$sample/input/job_$an.sh
+				bsub -q 8nh -o $nowPath/$sample/output/job_$an.log source $nowPath/$sample/input/job_$an.sh
 			end	
 		endif
 	end
+	echo "============================================================================================="
+	echo "Summerize: $doneS/$total"
 	rm -f tmp_.log
 cd -
 
