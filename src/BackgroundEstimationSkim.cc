@@ -329,10 +329,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		chain_->GetEntry(entry);
 		Evt_num->Fill(0);
 
-		//// Event variables 
-		std::vector<TLorentzVector>p4_Jets; 
-		std::vector<TLorentzVector>p4_bJets; 
-
 		bool passHLT(false); 
 		int nGoodVtxs(0);
 		int nAK5(0); 
@@ -384,33 +380,21 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		}
 
 		////  Higgs jets selection ================================================================================ 
-		vector<TLorentzVector> higgsJets;
 		for ( int i=0; i< FatJetInfo.Size; ++i ){
 			rethiggsjet.set(false);
 			if( fatjetSelHiggs( FatJetInfo, i, SubJetInfo, rethiggsjet)==0 ) continue; //higgs selection				
 			TLorentzVector jet;
 			jet.SetPtEtaPhiM(FatJetInfo.Pt[i], FatJetInfo.Eta[i], FatJetInfo.Phi[i], FatJetInfo.Mass[i]);
-			higgsJets.push_back(jet);
 			
 			Higgs_pt->Fill(FatJetInfo.Pt[i]);
 			double tau2Bytau1 = FatJetInfo.tau2[i]/FatJetInfo.tau1[i];
 			Higgs_tau2Bytau1->Fill(tau2Bytau1);
 			Higgs_mass->Fill(FatJetInfo.Mass[i]);
-
-			if ( !isData_ ) { //// Apply Higgs-tagging scale factor 
-				int iSubJet1 = FatJetInfo.Jet_SubJet1Idx[i];
-				int iSubJet2 = FatJetInfo.Jet_SubJet2Idx[i];
-				ApplyHiggsTagSF* higgsTagSF = new ApplyHiggsTagSF(double(SubJetInfo.Pt[iSubJet1]), double(SubJetInfo.Pt[iSubJet2]), 
-						double(SubJetInfo.Eta[iSubJet1]), double(SubJetInfo.Eta[iSubJet2]),
-						SubJetInfo.GenFlavor[iSubJet1], SubJetInfo.GenFlavor[iSubJet2], 
-						SubJetInfo.CombinedSVBJetTags[iSubJet1], SubJetInfo.CombinedSVBJetTags[iSubJet2]) ; 
-				higgsTagCorr_ = higgsTagSF->GetHiggsTagSF() ;
-				delete higgsTagSF ; 
-			}
+			nHiggs++
 		}
-		Higgs_num->Fill(higgsJets.size());
+		Higgs_num->Fill(nHiggs);
 
-		if( higgsJets.size()<1 ) continue;
+		if( nHiggs<1 ) continue;
 		cutFlow->Fill(double(3),evtwt_);
 
 		//// AK5 and bJet selection ================================================================================
@@ -421,83 +405,13 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			retjetidak5.set(false);
 			bool overlapWithCA8(false); 
 			if( jetSelAK5(JetInfo, i, retjetidak5) == 0 ) continue; // AK5 pre-selection
-/* 			for ( unsigned int f=0; f<higgsJets.size(); ++f ){ // dR selection
-				if( reco::deltaR(higgsJets[f].Eta(), higgsJets[f].Phi(), JetInfo.Eta[i], JetInfo.Phi[i])< 1.2 ){
-					overlapWithCA8 = true; 
-					break; 
-				}
-				else{
-					overlapWithCA8 = false; 
-				} 
-			}*/
-      			Jet thisjet(JetInfo, i);
-      			if( !overlapWithCA8 ) myjets->push_back(thisjet) ; 
+			nAK5++;
 		}
-
-		//// Jet Correction: JER, JES
-		JetCollection* ak5jets_tmp = new JetCollection; 
-		if ( !isData_) {
-			// Only AK5 jets not overlapping with Higgs jets 
-			JMEUncertUtil* jmeUtil_jer = new JMEUncertUtil(jmeParams_, EvtInfo, *myjets, "JER", jerShift_) ; 
-			JetCollection* ak5jets_jer = new JetCollection;
-			*ak5jets_jer = jmeUtil_jer->GetModifiedJetColl() ; 
-			delete jmeUtil_jer ; 
-
-			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *ak5jets_jer, "JESAK5MC", jesShift_) ; 
-			*ak5jets_tmp = jmeUtil_jes->GetModifiedJetColl() ; 
-			delete jmeUtil_jes; 
-			delete ak5jets_jer;
-		}
-		else {
-			// Only AK5 jets not overlapping with Higgs jets 
-			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *myjets, "JESAK5DATA", jesShift_) ; 
-			*ak5jets_tmp = jmeUtil_jes->GetModifiedJetColl() ; 
-			delete jmeUtil_jes ; 
-		}
-		delete myjets;
-
-		//// AK5 Jet Selection
-    		for (JetCollection::const_iterator ijet = ak5jets_tmp->begin(); ijet != ak5jets_tmp->end(); ++ijet) {
-      			if ( ijet->Pt() < jetPtMin_ || ijet->Pt() > jetPtMax_) continue ;
-			AK5_pt->Fill(double(ijet->Pt()),evtwt_); 
-			AK5_eta->Fill(double(ijet->Eta()),evtwt_); 
-			AK5_CSV->Fill(double(ijet->CombinedSVBJetTags()),evtwt_);
-			++nAK5; 
-		}
-		delete ak5jets_tmp;
-		AK5_num->Fill(double(nAK5),evtwt_);
 
 		if( nAK5<2 ) continue;
 		cutFlow->Fill(double(4),evtwt_);
 		
 		//// Store new tree, new branch with Jet correction  ==================================================================================================== 
-		JetCollection* allak5jets = new JetCollection;
-		JetCollection* allak5jets_corr = new JetCollection;
-		for ( int i=0; i<JetInfo.Size; ++i ){
-      			Jet thisjet(JetInfo, i);
-			allak5jets->push_back(thisjet);
-		}
-
-		//// 1. Jet Correction: JER, JES
-		if ( !isData_) {
-			// Only AK5 jets not overlapping with Higgs jets 
-			JMEUncertUtil* jmeUtil_jer = new JMEUncertUtil(jmeParams_, EvtInfo, *allak5jets, "JER", jerShift_) ; 
-			JetCollection* allak5jets_jer = new JetCollection;
-			*allak5jets_jer = jmeUtil_jer->GetModifiedJetColl() ; 
-			delete jmeUtil_jer ; 
-
-			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *allak5jets_jer, "JESAK5MC", jesShift_) ; 
-			*allak5jets_corr = jmeUtil_jes->GetModifiedJetColl() ; 
-			delete jmeUtil_jes;
-			delete allak5jets_jer; 
-		}else {
-			// Only AK5 jets not overlapping with Higgs jets 
-			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *allak5jets, "JESAK5DATA", jesShift_) ; 
-			*allak5jets_corr = jmeUtil_jes->GetModifiedJetColl() ; 
-			delete jmeUtil_jes ; 
-
-		}
-		delete allak5jets;
 
 		// Fill new tree, new branch
 		if( BuildMinTree_ ){
@@ -508,15 +422,13 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			}
 			evtwtPu_ = evtwt_;
 			evtNum_	 = maxEvents_;
-			evtwtHiggsTagCorr_ = higgsTagCorr_;
 			reRegistGen(GenInfo, newGenInfo); 	
-			reRegistJet(*allak5jets_corr, newJetInfo);	
+			reRegistJet(JetInfo, newJetInfo);	
 			reRegistJet(FatJetInfo, newFatJetInfo);	
 			reRegistJet(SubJetInfo, newSubJetInfo);
 			newtree->Fill();
 		}
 
-		delete allak5jets_corr;
 	} //// entry loop 
 
 	fout.close(); 
