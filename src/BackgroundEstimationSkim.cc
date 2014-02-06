@@ -70,17 +70,6 @@ Implementation:
 #include "BpbH/BackgroundEstimationSkim/interface/reRegistGen.hh"
 #include "BpbH/BackgroundEstimationSkim/interface/reRegistJet.hh"
 
-///// Jet Correction
-#include "BpbH/BprimeTobHAnalysis/src/JMEUncertUtil.cc"
-#include "BpbH/BprimeTobHAnalysis/src/BTagSFUtil.cc"
-#include "BpbH/BprimeTobHAnalysis/src/ApplyBTagSF.cc"
-#include "BpbH/BprimeTobHAnalysis/src/ApplyHiggsTagSF.cc"
-
-#include "BpbH/BprimeTobHAnalysis/interface/JMEUncertUtil.h"
-#include "BpbH/BprimeTobHAnalysis/interface/ApplyBTagSF.h"
-//#include "BpbH/BackgroundEstimationSkim/interface/ApplyBTagSF.h"
-#include "BpbH/BprimeTobHAnalysis/interface/ApplyHiggsTagSF.h"
-
 #include "BpbH/BprimeTobHAnalysis/interface/HiggsBRscaleFactors.h" 
 
 //
@@ -127,12 +116,7 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		const edm::ParameterSet bjetSelParams_; 
 		const edm::ParameterSet evtSelParams_; 
 
-		const edm::ParameterSet jmeParams_; 
-		const double jesShift_;
-		const double jerShift_; 
-		const double SFbShift_;
-		const double SFlShift_;
-
+		const bool selAK5_;
 		const bool BuildMinTree_;
 
 		TChain*            chain_;
@@ -155,13 +139,11 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		bool isData_; 
 		double evtwt_; 
 		double puweight_;
-		double higgsTagCorr_;
 
 		// New branch
 		int evtNum_;
 		bool McFlag_; 
 		double evtwtPu_; 
-		double evtwtHiggsTagCorr_; 
 
 		TH1D* 	Evt_num;
 		TH1D* 	cutFlow;
@@ -210,21 +192,14 @@ BackgroundEstimationSkim::BackgroundEstimationSkim(const edm::ParameterSet& iCon
 
 	higgsJetSelParame_(iConfig.getParameter<edm::ParameterSet>("HiggsJetSelParams")),
 	jetSelParams_(iConfig.getParameter<edm::ParameterSet>("JetSelParams")), 
-	bjetSelParams_(iConfig.getParameter<edm::ParameterSet>("BJetSelParams")), 
 	evtSelParams_(iConfig.getParameter<edm::ParameterSet>("EvtSelParams")),
 
-	jmeParams_(iConfig.getParameter<edm::ParameterSet>("JMEParams")),
-	jesShift_(iConfig.getParameter<double>("JESShift")),
-	jerShift_(iConfig.getParameter<double>("JERShift")),
-	SFbShift_(iConfig.getParameter<double>("SFbShift")),
-	SFlShift_(iConfig.getParameter<double>("SFlShift")),
-
+	selAK5_(iConfig.getParameter<bool>("SelectAK5")),
 	BuildMinTree_(iConfig.getParameter<bool>("BuildMinTree")), 
 
 	isData_(0),
 	evtwt_(1), 
-	puweight_(1),
-	higgsTagCorr_(1)  
+	puweight_(1)
 { 
 
 	if( doPUReweighting_) LumiWeights_ = edm::LumiReWeighting(file_PUDistMC_, file_PUDistData_, hist_PUDistMC_, hist_PUDistData_);
@@ -258,7 +233,6 @@ void BackgroundEstimationSkim::beginJob(){
 		newtree->Branch("EvtInfo.EvtNum", &evtNum_, "EvtInfo.EvtNum/I"); // Store weight of Evt and PU for each event
 		newtree->Branch("EvtInfo.McFlag", &McFlag_, "EvtInfo.McFlag/O"); // Store weight of Evt and PU for each event
 		newtree->Branch("EvtInfo.WeightEvtPU", &evtwtPu_, "EvtInfo.WeightEvtPU/D"); // Store weight of Evt and PU for each event
-		newtree->Branch("EvtInfo.WeightHiggsTagCorr", &evtwtHiggsTagCorr_, "EvtInfo.WeightHiggsTagCorr/D"); // Store weight of Evt and PU for each event
 		newGenInfo.RegisterTree(newtree);
 		newJetInfo.RegisterTree(newtree,"JetInfo");
 		newFatJetInfo.RegisterTree(newtree,"FatJetInfo");
@@ -332,6 +306,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		bool passHLT(false); 
 		int nGoodVtxs(0);
 		int nAK5(0); 
+		int nHiggs(0); 
 
 		isData_  = EvtInfo.McFlag ? 0 : 1; 
 		if( !isData_ ) evtwt_    = EvtInfo.Weight; 
@@ -383,14 +358,12 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		for ( int i=0; i< FatJetInfo.Size; ++i ){
 			rethiggsjet.set(false);
 			if( fatjetSelHiggs( FatJetInfo, i, SubJetInfo, rethiggsjet)==0 ) continue; //higgs selection				
-			TLorentzVector jet;
-			jet.SetPtEtaPhiM(FatJetInfo.Pt[i], FatJetInfo.Eta[i], FatJetInfo.Phi[i], FatJetInfo.Mass[i]);
-			
+			nHiggs++;
+		
 			Higgs_pt->Fill(FatJetInfo.Pt[i]);
 			double tau2Bytau1 = FatJetInfo.tau2[i]/FatJetInfo.tau1[i];
 			Higgs_tau2Bytau1->Fill(tau2Bytau1);
 			Higgs_mass->Fill(FatJetInfo.Mass[i]);
-			nHiggs++
 		}
 		Higgs_num->Fill(nHiggs);
 
@@ -399,16 +372,17 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 		//// AK5 and bJet selection ================================================================================
 		//// Preselection for AK5 Jet 
-    		JetCollection* myjets = new JetCollection;
-			//cout<<"================= AK5 ======"<<endl; 
 		for ( int i=0; i<JetInfo.Size; ++i ){ 
 			retjetidak5.set(false);
-			bool overlapWithCA8(false); 
 			if( jetSelAK5(JetInfo, i, retjetidak5) == 0 ) continue; // AK5 pre-selection
 			nAK5++;
+			
+			AK5_pt->Fill(JetInfo.Pt[i]);	
+			AK5_eta->Fill(JetInfo.Eta[i]);
+			AK5_CSV->Fill(JetInfo.CombinedSVBJetTags[i]);	
 		}
-
-		if( nAK5<2 ) continue;
+		AK5_num->Fill(nAK5);
+		if( selAK5_ && nAK5<2 ) continue;
 		cutFlow->Fill(double(4),evtwt_);
 		
 		//// Store new tree, new branch with Jet correction  ==================================================================================================== 
