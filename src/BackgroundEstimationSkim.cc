@@ -436,7 +436,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 
 		//// AK5 and bJet selection ================================================================================
 		//// Preselection for AK5 Jet 
-    		JetCollection* myjets = new JetCollection;
+    		JetCollection myjets;
 		//cout<<"[Alpha] "<<entry<<" AK5... "<<endl;
 		for ( int i=0; i<JetInfo.Size; ++i ){ 
 		//cout<<"[Alpha] "<<entry<<" AK5 "<<i<<endl;
@@ -453,36 +453,35 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 				} 
 			}
       			Jet thisjet(JetInfo, i);
-      			if( !overlapWithCA8 ) myjets->push_back(thisjet) ; 
+      			if( !overlapWithCA8 ) myjets.push_back(thisjet) ; 
 		}
 
 		//// Jet Correction: JER, JES
-		JetCollection* ak5jets_tmp = new JetCollection; 
+		JetCollection ak5jets_tmp; 
 		if ( !isData_) {
 		//cout<<"[Alpha] "<<entry<<" NO:3"<<endl;
 			// Only AK5 jets not overlapping with Higgs jets 
-			JMEUncertUtil* jmeUtil_jer = new JMEUncertUtil(jmeParams_, EvtInfo, *myjets, "JER", jerShift_) ; 
+			JMEUncertUtil* jmeUtil_jer = new JMEUncertUtil(jmeParams_, EvtInfo, myjets, "JER", jerShift_) ; 
 			JetCollection* ak5jets_jer = new JetCollection;
 			*ak5jets_jer = jmeUtil_jer->GetModifiedJetColl() ; 
 			delete jmeUtil_jer ; 
 
 			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *ak5jets_jer, "JESAK5MC", jesShift_) ; 
-			*ak5jets_tmp = jmeUtil_jes->GetModifiedJetColl() ; 
+			ak5jets_tmp = jmeUtil_jes->GetModifiedJetColl() ; 
 			delete jmeUtil_jes; 
 			delete ak5jets_jer;
 		}
 		else {
 		//cout<<"[Alpha] "<<entry<<" JER JES 1..."<<endl;
 			// Only AK5 jets not overlapping with Higgs jets 
-			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *myjets, "JESAK5DATA", jesShift_) ; 
-			*ak5jets_tmp = jmeUtil_jes->GetModifiedJetColl() ; 
+			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, myjets, "JESAK5DATA", jesShift_) ; 
+			ak5jets_tmp = jmeUtil_jes->GetModifiedJetColl() ; 
 			delete jmeUtil_jes ; 
 		//cout<<"[Alpha] "<<entry<<" JER JES 1"<<endl;
 		}
-		delete myjets;
 
 		//// AK5 Jet Selection
-    		for (JetCollection::const_iterator ijet = ak5jets_tmp->begin(); ijet != ak5jets_tmp->end(); ++ijet) {
+    		for (JetCollection::const_iterator ijet = ak5jets_tmp.begin(); ijet != ak5jets_tmp.end(); ++ijet) {
       			if ( ijet->Pt() < jetPtMin_ || ijet->Pt() > jetPtMax_) continue ;
 			AK5_pt->Fill(double(ijet->Pt()),evtwt_); 
 			AK5_eta->Fill(double(ijet->Eta()),evtwt_); 
@@ -490,7 +489,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
       			ak5jets_corr.push_back(*ijet);
 			++nAK5; 
 		}
-		delete ak5jets_tmp;
+		//delete ak5jets_tmp;
 		AK5_num->Fill(nAK5);
 
 		//// Jet Correction: BTag
