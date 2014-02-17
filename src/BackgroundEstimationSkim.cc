@@ -160,7 +160,8 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		// New branch
 		int evtNum_;
 		bool McFlag_; 
-		double evtwtPu_; 
+		double evtwt_new; 
+		double puwt_; 
 		double evtwtHiggsTagCorr_; 
 
 		TH1D* 	Evt_num;
@@ -169,6 +170,8 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		TH1D* 	Higgs_pt;
 		TH1D* 	Higgs_tau2Bytau1;
 		TH1D* 	Higgs_mass;
+		TH1D* 	Higgs_Prunedmass;
+		TH1D* 	Higgs_dyphi;
 		TH1D* 	AK5_num;
 		TH1D* 	AK5_pt;
 		TH1D* 	AK5_eta;
@@ -257,7 +260,8 @@ void BackgroundEstimationSkim::beginJob(){
 		newtree = fs->make<TTree>("tree", "") ; 
 		newtree->Branch("EvtInfo.EvtNum", &evtNum_, "EvtInfo.EvtNum/I"); // Store weight of Evt and PU for each event
 		newtree->Branch("EvtInfo.McFlag", &McFlag_, "EvtInfo.McFlag/O"); // Store weight of Evt and PU for each event
-		newtree->Branch("EvtInfo.WeightEvtPU", &evtwtPu_, "EvtInfo.WeightEvtPU/D"); // Store weight of Evt and PU for each event
+		newtree->Branch("EvtInfo.PU", 	  &puwt_, "EvtInfo.PU/D"); // Store weight of Evt and PU for each event
+		newtree->Branch("EvtInfo.WeightEvt", &evtwt_new, "EvtInfo.WeightEvt/D"); // Store weight of Evt and PU for each event
 		newtree->Branch("EvtInfo.WeightHiggsTagCorr", &evtwtHiggsTagCorr_, "EvtInfo.WeightHiggsTagCorr/D"); // Store weight of Evt and PU for each event
 		newGenInfo.RegisterTree(newtree);
 		newJetInfo.RegisterTree(newtree,"JetInfo");
@@ -272,7 +276,9 @@ void BackgroundEstimationSkim::beginJob(){
 	Higgs_num	= fs->make<TH1D>("HiggsJetInfo.Num",	"", 10,   0, 10); 
 	Higgs_pt 	= fs->make<TH1D>("HiggsJetInfo.Pt",	"", 1500, 0, 1500);
 	Higgs_tau2Bytau1= fs->make<TH1D>("HiggsJetInfo.Tau2ByTau1",	"", 10, 0, 1);
+	Higgs_dyphi	= fs->make<TH1D>("HiggsJetInfo.dyphi",	"", 300, 0, 3);
 	Higgs_mass	= fs->make<TH1D>("HiggsJetInfo.Mass",	"", 3000, 0, 300);
+	Higgs_Prunedmass= fs->make<TH1D>("HiggsJetInfo.PrunedMass",	"", 3000, 0, 300);
 	AK5_num		= fs->make<TH1D>("AK5JetInfo.Num",	"", 10,   0, 10); 
 	AK5_pt 		= fs->make<TH1D>("AK5JetInfo.Pt",	"", 1500, 0, 1500);
 	AK5_eta 	= fs->make<TH1D>("AK5JetInfo.Eta",	"", 600, -3, 3);
@@ -333,16 +339,19 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		std::vector<TLorentzVector>p4_Jets; 
 		std::vector<TLorentzVector>p4_bJets; 
 
+		double evtwt_old(1.);
 		bool passHLT(false); 
 		int nGoodVtxs(0);
 		int nAK5(0); 
 
 		isData_  = EvtInfo.McFlag ? 0 : 1; 
-		if( !isData_ ) evtwt_    = EvtInfo.Weight; 
+		if( !isData_ ) evtwt_old    = EvtInfo.Weight; 
 		if( doPUReweighting_ && !isData_ ) puweight_ = LumiWeights_.weight(EvtInfo.TrueIT[0]); 
+		evtwt_ *= evtwt_old; 
 		evtwt_ *= puweight_; 
 
 		//// Higgs BR reweighting, for b'b'>bHbH sample
+		double br_=1.;
 		if ( !isData_ ) {
 			//int nbprimeBH(0), nbprimeBZ(0), nbprimeTW(0); 
 			for (int igen=0; igen < GenInfo.Size; ++igen) {
@@ -350,20 +359,21 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 					int higgsDau0 = abs(GenInfo.Da0PdgID[igen]);
 					int higgsDau1 = abs(GenInfo.Da1PdgID[igen]);
 					int higgsDau = higgsDau0+higgsDau1; 
-					if(higgsDau==10) evtwt_ *= HiggsBRscaleFactors::higgsBBSf;
-					if(higgsDau==30) evtwt_ *= HiggsBRscaleFactors::higgsTauTauSf;
-					if(higgsDau==26) evtwt_ *= HiggsBRscaleFactors::higgsMuMuSf;
-					if(higgsDau==8)  evtwt_ *= HiggsBRscaleFactors::higgsCCSf;
-					if(higgsDau==6)  evtwt_ *= HiggsBRscaleFactors::higgsSSSf;
-					if(higgsDau==16) evtwt_ *= HiggsBRscaleFactors::higgsTTSf;
-					if(higgsDau==42) evtwt_ *= HiggsBRscaleFactors::higgsGGSf;
-					if(higgsDau==44) evtwt_ *= HiggsBRscaleFactors::higgsGammaGammaSf;
-					if(higgsDau==45) evtwt_ *= HiggsBRscaleFactors::higgsZGammaSf;
-					if(higgsDau==48) evtwt_ *= HiggsBRscaleFactors::higgsWWSf;
-					if(higgsDau==46) evtwt_ *= HiggsBRscaleFactors::higgsZZSf; 
+					if(higgsDau==10) br_ *= HiggsBRscaleFactors::higgsBBSf;
+					if(higgsDau==30) br_ *= HiggsBRscaleFactors::higgsTauTauSf;
+					if(higgsDau==26) br_ *= HiggsBRscaleFactors::higgsMuMuSf;
+					if(higgsDau==8)  br_ *= HiggsBRscaleFactors::higgsCCSf;
+					if(higgsDau==6)  br_ *= HiggsBRscaleFactors::higgsSSSf;
+					if(higgsDau==16) br_ *= HiggsBRscaleFactors::higgsTTSf;
+					if(higgsDau==42) br_ *= HiggsBRscaleFactors::higgsGGSf;
+					if(higgsDau==44) br_ *= HiggsBRscaleFactors::higgsGammaGammaSf;
+					if(higgsDau==45) br_ *= HiggsBRscaleFactors::higgsZGammaSf;
+					if(higgsDau==48) br_ *= HiggsBRscaleFactors::higgsWWSf;
+					if(higgsDau==46) br_ *= HiggsBRscaleFactors::higgsZZSf; 
 				}
 			}
 		}
+		evtwt_ *= br_;
 
 		cutFlow->Fill(double(0),evtwt_);
 		//// Trigger selection =====================================================================================
@@ -391,11 +401,21 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			TLorentzVector jet;
 			jet.SetPtEtaPhiM(FatJetInfo.Pt[i], FatJetInfo.Eta[i], FatJetInfo.Phi[i], FatJetInfo.Mass[i]);
 			higgsJets.push_back(jet);
-			
-			Higgs_pt->Fill(FatJetInfo.Pt[i]);
+
+			int iSub1 = FatJetInfo.Jet_SubJet1Idx[i];
+			int iSub2 = FatJetInfo.Jet_SubJet2Idx[i];
+			TLorentzVector Subjet1, Subjet2;
+			Subjet1.SetPtEtaPhiM(SubJetInfo.Pt[iSub1], SubJetInfo.Eta[iSub1], SubJetInfo.Phi[iSub1], SubJetInfo.Mass[iSub1]);
+			Subjet2.SetPtEtaPhiM(SubJetInfo.Pt[iSub2], SubJetInfo.Eta[iSub2], SubJetInfo.Phi[iSub2], SubJetInfo.Mass[iSub2]);
+			double subjet_dy = Subjet1.Rapidity() - Subjet2.Rapidity();
+			double subjet_dphi = Subjet1.DeltaPhi(Subjet2);
+			double subjet_dyphi = sqrt( subjet_dy*subjet_dy + subjet_dphi*subjet_dphi );
 			double tau2Bytau1 = FatJetInfo.tau2[i]/FatJetInfo.tau1[i];
+			Higgs_dyphi->Fill(subjet_dyphi);
+			Higgs_pt->Fill(FatJetInfo.Pt[i]);
 			Higgs_tau2Bytau1->Fill(tau2Bytau1);
 			Higgs_mass->Fill(FatJetInfo.Mass[i]);
+			Higgs_Prunedmass->Fill(FatJetInfo.MassPruned[i]);
 
 			if ( !isData_ ) { //// Apply Higgs-tagging scale factor 
 				int iSubJet1 = FatJetInfo.Jet_SubJet1Idx[i];
@@ -416,7 +436,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		//// AK5 and bJet selection ================================================================================
 		//// Preselection for AK5 Jet 
     		JetCollection* myjets = new JetCollection;
-			//cout<<"================= AK5 ======"<<endl; 
 		for ( int i=0; i<JetInfo.Size; ++i ){ 
 			retjetidak5.set(false);
 			bool overlapWithCA8(false); 
@@ -470,43 +489,45 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		if( nAK5<2 ) continue;
 		cutFlow->Fill(double(4),evtwt_);
 		
-		//// Store new tree, new branch with Jet correction  ==================================================================================================== 
-		JetCollection* allak5jets = new JetCollection;
-		JetCollection* allak5jets_corr = new JetCollection;
-		for ( int i=0; i<JetInfo.Size; ++i ){
-      			Jet thisjet(JetInfo, i);
-			allak5jets->push_back(thisjet);
-		}
-
-		//// 1. Jet Correction: JER, JES
-		if ( !isData_) {
-			// Only AK5 jets not overlapping with Higgs jets 
-			JMEUncertUtil* jmeUtil_jer = new JMEUncertUtil(jmeParams_, EvtInfo, *allak5jets, "JER", jerShift_) ; 
-			JetCollection* allak5jets_jer = new JetCollection;
-			*allak5jets_jer = jmeUtil_jer->GetModifiedJetColl() ; 
-			delete jmeUtil_jer ; 
-
-			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *allak5jets_jer, "JESAK5MC", jesShift_) ; 
-			*allak5jets_corr = jmeUtil_jes->GetModifiedJetColl() ; 
-			delete jmeUtil_jes;
-			delete allak5jets_jer; 
-		}else {
-			// Only AK5 jets not overlapping with Higgs jets 
-			JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *allak5jets, "JESAK5DATA", jesShift_) ; 
-			*allak5jets_corr = jmeUtil_jes->GetModifiedJetColl() ; 
-			delete jmeUtil_jes ; 
-
-		}
-		delete allak5jets;
-
-		// Fill new tree, new branch
+		//// Store new tree, new branch with Jet correction  ====================================================================================================
 		if( BuildMinTree_ ){
+
+			JetCollection* allak5jets = new JetCollection;
+			JetCollection* allak5jets_corr = new JetCollection;
+			for ( int i=0; i<JetInfo.Size; ++i ){
+				Jet thisjet(JetInfo, i);
+				allak5jets->push_back(thisjet);
+			}
+
+			//// 1. Jet Correction: JER, JES
+			if ( !isData_) {
+				// Only AK5 jets not overlapping with Higgs jets 
+				JMEUncertUtil* jmeUtil_jer = new JMEUncertUtil(jmeParams_, EvtInfo, *allak5jets, "JER", jerShift_) ; 
+				JetCollection* allak5jets_jer = new JetCollection;
+				*allak5jets_jer = jmeUtil_jer->GetModifiedJetColl() ; 
+				delete jmeUtil_jer ; 
+
+				JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *allak5jets_jer, "JESAK5MC", jesShift_) ; 
+				*allak5jets_corr = jmeUtil_jes->GetModifiedJetColl() ; 
+				delete jmeUtil_jes;
+				delete allak5jets_jer; 
+			}else {
+				// Only AK5 jets not overlapping with Higgs jets 
+				JMEUncertUtil* jmeUtil_jes = new JMEUncertUtil(jmeParams_, EvtInfo, *allak5jets, "JESAK5DATA", jesShift_) ; 
+				*allak5jets_corr = jmeUtil_jes->GetModifiedJetColl() ; 
+				delete jmeUtil_jes ; 
+
+			}
+			delete allak5jets;
+
+			// Fill new tree, new branch
 			if( isData_ ){
 				McFlag_=0;
 			}else{
 				McFlag_=1;
 			}
-			evtwtPu_ = evtwt_;
+			evtwt_new = evtwt_old * br_;
+			puwt_ 	 = puweight_;
 			evtNum_	 = maxEvents_;
 			evtwtHiggsTagCorr_ = higgsTagCorr_;
 			reRegistGen(GenInfo, newGenInfo); 	
@@ -514,9 +535,9 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			reRegistJet(FatJetInfo, newFatJetInfo);	
 			reRegistJet(SubJetInfo, newSubJetInfo);
 			newtree->Fill();
-		}
 
-		delete allak5jets_corr;
+			delete allak5jets_corr;
+		}
 	} //// entry loop 
 
 	fout.close(); 
