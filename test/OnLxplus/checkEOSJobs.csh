@@ -34,10 +34,12 @@ cd $1
 		echo "============================================================================================="
 		echo "$sample"
 		set killedJobs=`grep Killed $sample/output/*.log | grep -v 'cpu usage'| sed 's/.*job_\(.*\)\.sh.*/\1/g'`
+		set ksegJobs=`grep 'Segmentation' $sample/output/*.log | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
 		set kCPUJobs=`grep Killed $sample/output/*.log | grep 'cpu usage' | sed 's/.*job_\(.*\)\.log.*/\1/g'`
 		set kCPUJobs2=`grep 'CPU time limit exceeded' $sample/output/*.log | grep 'sh:Exited' | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
 		set kCPUJobs3=`grep 'CPU time limit exceeded' $sample/output/*.log | grep 'sh: line' | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
 		set abJobs=`grep Aborted $sample/output/*.log | sed 's/.*job_\(.*\)\.sh.*/\1/g'`
+		set ksegNum=`echo $ksegJobs | wc -w `
 		set kCPUNum=`echo $kCPUJobs | wc -w `
 		set kCPUNum2=`echo $kCPUJobs2 | wc -w `
 		set kCPUNum3=`echo $kCPUJobs3 | wc -w `
@@ -46,7 +48,7 @@ cd $1
 		set jobNum=`ls -l $sample/input | grep '.sh' | wc -l`
 		set doneJobs=`/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select ls eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample | grep root | sed 's/bprimeTobH_\(.*\)\.root/\1/g'` 
 		set doneNum=`echo $doneJobs | wc -w`	
-		set realdoneNum=`echo $doneNum'-'$killedNum'-'$abNum'-'$kCPUNum2'-'$kCPUNum3 | bc`	
+		set realdoneNum=`echo $doneNum'-'$killedNum'-'$abNum'-'$kCPUNum2'-'$kCPUNum3'-'$ksegNum | bc`	
 		echo "Status(root): $doneNum/$jobNum"
 		echo "Status(real): $realdoneNum/$jobNum"
 		if ( $doneNum == 0 ) then
@@ -86,6 +88,9 @@ cd $1
 		endif
 		if ( $abNum != 0 ) then
 			echo "Aborted Jobs: "$abJobs 
+		endif
+		if ( $ksegNum != 0 ) then
+			echo "Segmetation Jobs: "$ksegJobs 
 		endif
 		rm -f tmp_.log
 
