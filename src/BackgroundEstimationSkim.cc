@@ -141,9 +141,13 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		double puweight_;
 
 		// New branch
-		int evtNum_;
+		long int evtNum_;
+		int runNum_;
+		int lumiNum_;
+		int totalEvts_;
 		bool McFlag_; 
 		double evtwtPu_; 
+		double evtwt_new; 
 
 		TH1D* 	Evt_num;
 		TH1D* 	cutFlow;
@@ -230,9 +234,13 @@ void BackgroundEstimationSkim::beginJob(){
 
         if( BuildMinTree_ ) {
 		newtree = fs->make<TTree>("tree", "") ; 
-		newtree->Branch("EvtInfo.EvtNum", &evtNum_, "EvtInfo.EvtNum/I"); // Store weight of Evt and PU for each event
+		newtree->Branch("EvtInfo.EvtTotal", &totalEvts_, "EvtInfo.EvtTotal/I"); // Store weight of Evt and PU for each event
+		newtree->Branch("EvtInfo.EvtNo", &evtNum_, "EvtInfo.EvtNo/L"); // Store weight of Evt and PU for each event
+		newtree->Branch("EvtInfo.LumiNo", &lumiNum_, "EvtInfo.LumiNo/I"); // Store weight of Evt and PU for each event
+		newtree->Branch("EvtInfo.RunNo", &runNum_, "EvtInfo.RunNo/I"); // Store weight of Evt and PU for each event
 		newtree->Branch("EvtInfo.McFlag", &McFlag_, "EvtInfo.McFlag/O"); // Store weight of Evt and PU for each event
-		newtree->Branch("EvtInfo.WeightEvtPU", &evtwtPu_, "EvtInfo.WeightEvtPU/D"); // Store weight of Evt and PU for each event
+		newtree->Branch("EvtInfo.PU", &evtwtPu_, "EvtInfo.PU/D"); // Store weight of Evt and PU for each event
+		newtree->Branch("EvtInfo.WeightEvt", &evtwt_new, "EvtInfo.WeightEvt/D"); // Store weight of Evt and PU for each event
 		newGenInfo.RegisterTree(newtree);
 		newJetInfo.RegisterTree(newtree,"JetInfo");
 		newFatJetInfo.RegisterTree(newtree,"FatJetInfo");
@@ -302,18 +310,21 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		if( (entry%reportEvery_) == 0) edm::LogInfo("Event") << entry << " of " << maxEvents_;
 		chain_->GetEntry(entry);
 		Evt_num->Fill(0);
-
+		
+		double evtwt_old(1);
 		bool passHLT(false); 
 		int nGoodVtxs(0);
 		int nAK5(0); 
 		int nHiggs(0); 
 
 		isData_  = EvtInfo.McFlag ? 0 : 1; 
-		if( !isData_ ) evtwt_    = EvtInfo.Weight; 
+		if( !isData_ ) evtwt_old    = EvtInfo.Weight; 
 		if( doPUReweighting_ && !isData_ ) puweight_ = LumiWeights_.weight(EvtInfo.TrueIT[0]); 
+		evtwt_ *= evtwt_old; 
 		evtwt_ *= puweight_; 
 
 		//// Higgs BR reweighting, for b'b'>bHbH sample
+		double br_(1);
 		if ( !isData_ ) {
 			//int nbprimeBH(0), nbprimeBZ(0), nbprimeTW(0); 
 			for (int igen=0; igen < GenInfo.Size; ++igen) {
@@ -321,39 +332,41 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 					int higgsDau0 = abs(GenInfo.Da0PdgID[igen]);
 					int higgsDau1 = abs(GenInfo.Da1PdgID[igen]);
 					int higgsDau = higgsDau0+higgsDau1; 
-					if(higgsDau==10) evtwt_ *= HiggsBRscaleFactors::higgsBBSf;
-					if(higgsDau==30) evtwt_ *= HiggsBRscaleFactors::higgsTauTauSf;
-					if(higgsDau==26) evtwt_ *= HiggsBRscaleFactors::higgsMuMuSf;
-					if(higgsDau==8)  evtwt_ *= HiggsBRscaleFactors::higgsCCSf;
-					if(higgsDau==6)  evtwt_ *= HiggsBRscaleFactors::higgsSSSf;
-					if(higgsDau==16) evtwt_ *= HiggsBRscaleFactors::higgsTTSf;
-					if(higgsDau==42) evtwt_ *= HiggsBRscaleFactors::higgsGGSf;
-					if(higgsDau==44) evtwt_ *= HiggsBRscaleFactors::higgsGammaGammaSf;
-					if(higgsDau==45) evtwt_ *= HiggsBRscaleFactors::higgsZGammaSf;
-					if(higgsDau==48) evtwt_ *= HiggsBRscaleFactors::higgsWWSf;
-					if(higgsDau==46) evtwt_ *= HiggsBRscaleFactors::higgsZZSf; 
+					if(higgsDau==10) br_ *= HiggsBRscaleFactors::higgsBBSf;
+					if(higgsDau==30) br_ *= HiggsBRscaleFactors::higgsTauTauSf;
+					if(higgsDau==26) br_ *= HiggsBRscaleFactors::higgsMuMuSf;
+					if(higgsDau==8)  br_ *= HiggsBRscaleFactors::higgsCCSf;
+					if(higgsDau==6)  br_ *= HiggsBRscaleFactors::higgsSSSf;
+					if(higgsDau==16) br_ *= HiggsBRscaleFactors::higgsTTSf;
+					if(higgsDau==42) br_ *= HiggsBRscaleFactors::higgsGGSf;
+					if(higgsDau==44) br_ *= HiggsBRscaleFactors::higgsGammaGammaSf;
+					if(higgsDau==45) br_ *= HiggsBRscaleFactors::higgsZGammaSf;
+					if(higgsDau==48) br_ *= HiggsBRscaleFactors::higgsWWSf;
+					if(higgsDau==46) br_ *= HiggsBRscaleFactors::higgsZZSf; 
 				}
 			}
 		}
+		evtwt_ *= br_; 
 
-		cutFlow->Fill(double(0),evtwt_);
+		cutFlow->Fill(0);
 		//// Trigger selection =====================================================================================
 		TriggerSelector trigSel(hltPaths_); 
 		passHLT = trigSel.getTrigDecision(EvtInfo); 
 		if( !passHLT ) continue; 
-		cutFlow->Fill(double(1),evtwt_);
+		cutFlow->Fill(1);
 
 		//// Vertex selection =====================================================================================
 		VertexSelector vtxSel(VtxInfo); 
 		nGoodVtxs = vtxSel.NGoodVtxs(); 
 		if( nGoodVtxs < 1){ edm::LogInfo("NoGoodPrimaryVertex") << " No good primary vertex "; continue; }
-		cutFlow->Fill(double(2),evtwt_);
+		cutFlow->Fill(2);
 
 		//// Recall data no Jet =====================================================================================
 		if( isData_ ){
 			if( JetInfo.Size == 0 ) fout << EvtInfo.RunNo << " " << EvtInfo.LumiNo << " " << EvtInfo.EvtNo << std::endl; 
 		}
-
+		//cout<<entry<<" "<<EvtInfo.RunNo<<" "<<EvtInfo.LumiNo<<" "<<EvtInfo.EvtNo<<endl;
+		
 		////  Higgs jets selection ================================================================================ 
 		for ( int i=0; i< FatJetInfo.Size; ++i ){
 			rethiggsjet.set(false);
@@ -368,7 +381,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		Higgs_num->Fill(nHiggs);
 
 		if( nHiggs<1 ) continue;
-		cutFlow->Fill(double(3),evtwt_);
+		cutFlow->Fill(3);
 
 		//// AK5 and bJet selection ================================================================================
 		//// Preselection for AK5 Jet 
@@ -383,7 +396,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		}
 		AK5_num->Fill(nAK5);
 		if( selAK5_ && nAK5<2 ) continue;
-		cutFlow->Fill(double(4),evtwt_);
+		cutFlow->Fill(4);
 		
 		//// Store new tree, new branch with Jet correction  ==================================================================================================== 
 
@@ -394,8 +407,12 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			}else{
 				McFlag_=1;
 			}
-			evtwtPu_ = evtwt_;
-			evtNum_	 = maxEvents_;
+			evtNum_    = EvtInfo.EvtNo;	
+			lumiNum_   = EvtInfo.LumiNo;	
+			runNum_    = EvtInfo.RunNo;	
+			evtwt_new  = evtwt_old * br_;
+			evtwtPu_   = puweight_;
+			totalEvts_ = maxEvents_;
 			reRegistGen(GenInfo, newGenInfo); 	
 			reRegistJet(JetInfo, newJetInfo);	
 			reRegistJet(FatJetInfo, newFatJetInfo);	

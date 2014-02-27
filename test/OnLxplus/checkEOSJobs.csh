@@ -1,9 +1,9 @@
 #/bin/tcsh
-echo "#############################################"
-echo "###                                       ###"
-echo "###  ./checkEOSJob.csh [name] <reSubmit>  ###"
-echo "###                                       ###"
-echo "#############################################"
+echo "####################################################"
+echo "###                                              ###"
+echo "###  ./checkEOSJob.csh [name] <reSubmit> <bque>  ###"
+echo "###                                              ###"
+echo "####################################################"
 if ( $1 == "" ) then
 	echo "ERROR: Please input work folder name."
 	echo "Ex: ./checkEOSJobs.csh [name]"
@@ -94,11 +94,15 @@ cd $1
 		endif
 		rm -f tmp_.log
 
+		set q='8nh'
+		if ( $3 != "" ) then
+			set q=$3
+		endif
 		if ( $2 == 'reSubmit' && $notDone != 0 ) then
 			foreach nn($notDonelist)
 				mv $nowPath/$sample/output/job_$nn.log $nowPath/$sample
 				echo resubmit job_$nn.sh...
-				bsub -q 8nh -o $nowPath/$sample/output/job_$nn.log source $nowPath/$sample/input/job_$nn.sh
+				bsub -q $q -o $nowPath/$sample/output/job_$nn.log source $nowPath/$sample/input/job_$nn.sh
 			end	
 		endif
 		if ( $2 == 'reSubmit' && $killedNum != 0 ) then
@@ -106,7 +110,7 @@ cd $1
 				mv $nowPath/$sample/output/job_$kn.log $nowPath/$sample
 				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$kn.root
 				echo resubmit job_$kn.sh...
-				bsub -q 8nh -o $nowPath/$sample/output/job_$kn.log source $nowPath/$sample/input/job_$kn.sh
+				bsub -q $q -o $nowPath/$sample/output/job_$kn.log source $nowPath/$sample/input/job_$kn.sh
 			end	
 		endif
 		if ( $2 == 'reSubmit' && $kCPUNum2 != 0 ) then
@@ -114,7 +118,7 @@ cd $1
 				mv $nowPath/$sample/output/job_$kcn.log $nowPath/$sample
 				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$kcn.root
 				echo resubmit job_$kcn.sh...
-				bsub -q 8nh -o $nowPath/$sample/output/job_$kcn.log source $nowPath/$sample/input/job_$kcn.sh
+				bsub -q $q -o $nowPath/$sample/output/job_$kcn.log source $nowPath/$sample/input/job_$kcn.sh
 			end	
 		endif
 		if ( $2 == 'reSubmit' && $kCPUNum3 != 0 ) then
@@ -122,7 +126,7 @@ cd $1
 				mv $nowPath/$sample/output/job_$kcn3.log $nowPath/$sample
 				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$kcn3.root
 				echo resubmit job_$kcn3.sh...
-				bsub -q 8nh -o $nowPath/$sample/output/job_$kcn3.log source $nowPath/$sample/input/job_$kcn3.sh
+				bsub -q $q -o $nowPath/$sample/output/job_$kcn3.log source $nowPath/$sample/input/job_$kcn3.sh
 			end	
 		endif
 		if ( $2 == 'reSubmit' && $abNum != 0 ) then
@@ -130,7 +134,7 @@ cd $1
 				mv $nowPath/$sample/output/job_$an.log $nowPath/$sample
 				/afs/cern.ch/project/eos/installation/0.3.15/bin/eos.select rm eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/$1/$sample/bprimeTobH_$an.root
 				echo resubmit job_$an.sh...
-				bsub -q 8nh -o $nowPath/$sample/output/job_$an.log source $nowPath/$sample/input/job_$an.sh
+				bsub -q $q -o $nowPath/$sample/output/job_$an.log source $nowPath/$sample/input/job_$an.sh
 			end	
 		endif
 	end
