@@ -10,6 +10,7 @@ def make_filenamelist(input_dir):
     output = proc.communicate()[0]
     if proc.returncode != 0:
         print output
+
         sys.exit(1)
 
     return output.splitlines()
@@ -25,24 +26,32 @@ def process_input_dir(input_dir, match, filelist):
     jobdict = {}
 
     for filename in filenamelist:
+        print filename #[Debug: Alpha]
         if( not re.search('.root$', filename) ):
             continue
         if ( match!=None and not re.search(match, filename) ):
             continue
-        m1 = re.search('_\d+_\d+_\w+.root', filename)
+        m1 = re.search('_\d+.root', filename) #[Debug: Alpha]
+        print m1 #[Debug: Alpha]
         if name=='':
-            name = re.split('_\d+_\d+_\w+.root', filename)[0]
+            name = re.split('_\d+.root', filename)[0] #[Debug: Alpha]
+        print nam #[Debug: Alpha]e
         jobstring = filename[m1.start():].lstrip('_').replace('.root','').split('_')
+        print jobstring #[Debug: Alpha]
         job = int(jobstring[0])
+        print job #[Debug: Alpha]
         if job not in jobdict.keys():
             jobdict[job] = []
-            jobdict[job].append([int(jobstring[1])])
-            jobdict[job].append([jobstring[2]])
+            jobdict[job].append([1])
+            #jobdict[job].append([int(jobstring[1])]) #[Debug: Alpha]
+            #jobdict[job].append([jobstring[2]]) #[Debug: Alpha]
+            print jobdict[job]
         else:
-            jobdict[job][0].append(int(jobstring[1]))
-            jobdict[job][1].append(jobstring[2])
+            jobdict[job][0].append([1])
+        #    jobdict[job][1].append(jobstring[2]) #[Debug: Alpha]
 
     jobs = jobdict.keys()
+    print jobs
     if( len(jobs)==0 ):
         print 'No matching .root files found'
         sys.exit()
@@ -50,7 +59,9 @@ def process_input_dir(input_dir, match, filelist):
     jobs.sort()
     for job in jobs:
         maxsub = max(jobdict[job][0])
-        filename = (path+name+'_%i_%i_%s.root')%(job, maxsub, jobdict[job][1][jobdict[job][0].index(maxsub)])
+        #filename = (path+name+'_%i.root')%(job, maxsub, jobdict[job][1][jobdict[job][0].index(maxsub)]) #[Debug: Alpha]
+        filename = (path+name+'_%i.root')%(job) #[Debug: Alpha]
+        print filename #[Debug: Alpha]
         filelist.append(filename)
 
     return
@@ -93,7 +104,6 @@ cp -v Evt_NoJets.txt DATASET_WORKDIR/output/Evt_NoJets_JOB_NUMBER.txt
 exit $exitcode
 
 """
-
 
 # usage description
 usage = """Usage: ./createAndSubmitJobs.py [options]\n
@@ -155,7 +165,6 @@ def main():
   # open and read the dataset_list file
   dataset_list_file = open(dataset_list,"r")
   dataset_list_lines = dataset_list_file.readlines()
-
   # loop over datasets
   for line in dataset_list_lines:
     line_elements = line.split()
