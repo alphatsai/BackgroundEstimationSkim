@@ -6,46 +6,10 @@ from FWCore.ParameterSet.VarParsing import VarParsing
 #from BackgroundEstimationSkimv1.BackgroundEstimationSkim.Data.JetHT_Run2012BCD_cfi import * 
 from inputFiles_cfi import * 
 
-#FileNames = [
-##'file:BprimeTobH_v1_10_1_HIn.root'
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_10_1_HIn.root',
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_1_1_Pf5.root',
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_2_1_Y96.root',
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_3_1_h6K.root',
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_4_1_gI9.root',
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_5_1_QTk.root',
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_6_1_H6G.root',
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_7_1_YrU.root',
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_8_1_KTf.root',
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/BprimeBprimeToBHBHinc_M-700_TuneZ2star_8TeV-madgraph/BprimeTobH_v1_9_1_G4q.root'
-#]
-#FileNames = [
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_1_1_f05.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_2_1_nim.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_3_1_VVh.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_4_1_nCj.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_5_1_eyp.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_6_1_JhQ.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_7_1_rJB.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_8_1_V7X.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_9_1_mfe.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-300to470_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_10_1_zRk.root'
-#]
-#FileNames = [
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_86_1_aXM.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_87_1_S4O.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_88_1_0vB.root',
-#    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/Data_bugfix/Jet_Run2012A/BprimeTobH_v1_89_1_hm3.root',
-#]
 FileNames = [
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_177_1_pO2.root',
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_178_1_i2v.root',
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_179_1_Lry.root',
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_180_1_xz0.root',
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_181_1_08Q.root',
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_182_1_GoO.root',
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_183_1_4Lg.root',
-    'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/devdatta/NtuplesBprimeTobH_v1/QCD_Pt-800to1000_TuneZ2star_8TeV_pythia6/BprimeTobH_v1_184_1_lxc.root'
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/GeneralSkimBkg_v1/TTJets_HadronicMGDecays_8TeV-madgraph__Summer12_DR53X-PU_S10_START53_V7A-v1__AODSIM/bprimeTobH_98.root'
+#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/GeneralSkimBkg_v1/QCD_Pt-600to800_TuneZ2star_8TeV_pythia6__Summer12_DR53X-PU_S10_START53_V7A-v2__AODSIM/bprimeTobH_94.root'
+'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/GeneralSkimData_v1/Jet__Run2012A_missingPart-22Jan2013-v1__AOD/bprimeTobH_10.root'
 ]
 
 options = VarParsing('python')
@@ -207,14 +171,14 @@ from BpbH.BprimeTobHAnalysis.JMEUncertUntilParameters_cfi import *
 process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     MaxEvents           = cms.int32(options.maxEvents),
     ReportEvery         = cms.int32(options.reportEvery),  
-    InputTTree          = cms.string('ntuple/tree'),
+    InputTTree          = cms.string('BprimebH/tree'),
     InputFiles          = cms.vstring(FileNames), 
     HLTPaths            = defaultTriggerSelectionParameters.clone(), 
-    DoPUReweighting     = cms.bool(options.doPUReweighting),
-    File_PUDistMC       = cms.string('pileup_Data_Summer12_53X_S10.root'),
-    File_PUDistData     = cms.string('pileup_Data_Summer12_53X_S10.root'),
-    Hist_PUDistMC       = cms.string('pileup_mc'),
-    Hist_PUDistData     = cms.string('pileup_data'),
+#    DoPUReweighting     = cms.bool(options.doPUReweighting),
+#    File_PUDistMC       = cms.string('pileup_Data_Summer12_53X_S10.root'),
+#    File_PUDistData     = cms.string('pileup_Data_Summer12_53X_S10.root'),
+#    Hist_PUDistMC       = cms.string('pileup_mc'),
+#    Hist_PUDistData     = cms.string('pileup_data'),
 	
     JetPtMin            = cms.double(options.jetPtMin),
     JetPtMax            = cms.double(options.jetPtMax),
@@ -222,12 +186,18 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     BJetCSV           	= cms.double(options.bJetCSV),
 
     JetSelParams        = defaultJetSelectionParameters.clone(
-		jetPtMin = cms.double(10)
+		jetPtMin 	= cms.double(30),
+    		jetCSVDiscMin   = cms.double(0.244),   
 	),
     BJetSelParams       = defaultBJetSelectionParameters.clone(),
-#    FatJetSelParams     = defaultFatJetSelectionParameters.clone(
-#	), 
-    HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(), 
+    HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(
+		#dRSubjetsMin = cms.double(-1),
+		#dRSubjetsMax = cms.double(100),
+    		subjet1CSVDiscMin   = cms.double(0.679),
+		subjet1CSVDiscMax   = cms.double(1.000),
+    		subjet2CSVDiscMin   = cms.double(0.679),
+    		subjet2CSVDiscMax   = cms.double(1.000),
+	), 
     HTSelParams         = defaultHTSelectionParameters.clone(),
     EvtSelParams        = defaultEventSelectionParameters.clone(),
 

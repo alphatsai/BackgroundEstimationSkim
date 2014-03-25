@@ -168,11 +168,11 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     InputTTree          = cms.string('ntuple/tree'),
     InputFiles          = cms.vstring(FileNames), 
     HLTPaths            = defaultTriggerSelectionParameters.clone(), 
-    DoPUReweighting     = cms.bool(options.doPUReweighting),
-    File_PUDistMC       = cms.string('pileup_Data_Summer12_53X_S10.root'),
-    File_PUDistData     = cms.string('pileup_Data_Summer12_53X_S10.root'),
-    Hist_PUDistMC       = cms.string('pileup_mc'),
-    Hist_PUDistData     = cms.string('pileup_data'),
+#    DoPUReweighting     = cms.bool(options.doPUReweighting),
+#    File_PUDistMC       = cms.string('pileup_Data_Summer12_53X_S10.root'),
+#    File_PUDistData     = cms.string('pileup_Data_Summer12_53X_S10.root'),
+#    Hist_PUDistMC       = cms.string('pileup_mc'),
+#    Hist_PUDistData     = cms.string('pileup_data'),
 	
     JetPtMin            = cms.double(options.jetPtMin),
     JetPtMax            = cms.double(options.jetPtMax),
@@ -180,12 +180,18 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     BJetCSV           	= cms.double(options.bJetCSV),
 
     JetSelParams        = defaultJetSelectionParameters.clone(
-		jetPtMin = cms.double(10)
+		jetPtMin = cms.double(30)
+    		jetCSVDiscMin   = cms.double(0.244),   
 	),
     BJetSelParams       = defaultBJetSelectionParameters.clone(),
-#    FatJetSelParams     = defaultFatJetSelectionParameters.clone(
-#	), 
-    HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(), 
+    HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(
+		#dRSubjetsMin = cms.double(-1),
+		#dRSubjetsMax = cms.double(100),
+    		subjet1CSVDiscMin   = cms.double(0.679),
+		subjet1CSVDiscMax   = cms.double(1.000),
+    		subjet2CSVDiscMin   = cms.double(0.679),
+    		subjet2CSVDiscMax   = cms.double(1.000),
+	), 
     HTSelParams         = defaultHTSelectionParameters.clone(),
     EvtSelParams        = defaultEventSelectionParameters.clone(),
 
