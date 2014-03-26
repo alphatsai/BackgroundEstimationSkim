@@ -181,7 +181,7 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     BJetCSV           	= cms.double(options.bJetCSV),
 
     JetSelParams        = defaultJetSelectionParameters.clone(
-		jetPtMin = cms.double(30)
+		jetPtMin = cms.double(30),
     		jetCSVDiscMin   = cms.double(0.244),   
 	),
     BJetSelParams       = defaultBJetSelectionParameters.clone(),
