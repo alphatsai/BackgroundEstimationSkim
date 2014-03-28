@@ -249,12 +249,12 @@ void BackgroundEstimationSkim::beginJob(){
 	FatJetInfo.Register(chain_,"FatJetInfo");
 	SubJetInfo.Register(chain_,"SubJetInfo");
 
-	chain_->SetBranchAddress("EvtInfo.RunNo",	&_runNo);
+/*	chain_->SetBranchAddress("EvtInfo.RunNo",	&_runNo);
 	chain_->SetBranchAddress("EvtInfo.LumiNo",	&_lumiNo);
 	chain_->SetBranchAddress("EvtInfo.EvtNo",	&_evtNo);
 	chain_->SetBranchAddress("EvtInfo.McFlag",	&_mcFlag);
 	chain_->SetBranchAddress("EvtInfo.PU",		&_PU);
-	chain_->SetBranchAddress("EvtInfo.WeightEvt",	&_evtwt);
+	chain_->SetBranchAddress("EvtInfo.WeightEvt",	&_evtwt);*/
 
         if( BuildMinTree_ ) {
 		newtree = fs->make<TTree>("tree", "") ;
