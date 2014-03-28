@@ -113,78 +113,35 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		const std::vector<std::string>  inputFiles_;
 		const edm::ParameterSet         hltPaths_; 
 
-		const double jetPtMin_ ; 
-		const double jetPtMax_ ;
-		const double bjetPtMin_ ; 
-		const double bjetCSV_ ; 
-
 		const edm::ParameterSet higgsJetSelParame_; 
 		const edm::ParameterSet jetSelParams_; 
 		const edm::ParameterSet bjetSelParams_; 
 		const edm::ParameterSet evtSelParams_; 
-
-		const edm::ParameterSet jmeParams_; 
-		const double jesShift_;
-		const double jerShift_; 
-		const double SFbShift_;
-		const double SFlShift_;
 
 		const bool BuildMinTree_;
 
 		TChain*            chain_;
 		TTree*		   newtree;	
 
-		GenInfoBranches    GenInfo;
-		EvtInfoBranches    EvtInfo;
-		VertexInfoBranches VtxInfo;
+		edm::Service<TFileService> fs; 
+		
+		// branch
+
 		JetInfoBranches    JetInfo;
 		JetInfoBranches    FatJetInfo;
 		JetInfoBranches    SubJetInfo;
 
-		GenInfoBranches    newGenInfo;
-		JetInfoBranches    newJetInfo;
-		JetInfoBranches    newFatJetInfo;
-		JetInfoBranches    newSubJetInfo;
-
-		edm::Service<TFileService> fs; 
-		
-		// New branch
-
-		long int _evtNo;
-		int _lumiNo;
-		int _runNo; 
-		bool _mcFlag;
-		double _PU;	
-		double _evtwt; 
-
-		long int evtNo_;
-		int lumiNo_;
-		int runNo_; 
-		bool mcFlag_;
-		double PU_;	
-		double evtwt_; 
-
-		TH1D* 	Evt_num;
-		TH1D* 	cutFlow;
+		TH1D* 	h_cutflow;
 		TH1D* 	Higgs_num;
 		TH1D* 	Higgs_pt;
 		TH1D* 	Higgs_tau2Bytau1;
 		TH1D* 	Higgs_mass;
+		TH1D* 	Higgs_Prmass;
 		TH1D* 	Higgs_subCSV;
-		TH1D* 	AK5_num;
-		TH1D* 	AK5_pt;
-		TH1D* 	AK5_eta;
-		TH1D* 	AK5_CSV;
 		TH1D* 	bJet_num;
 		TH1D* 	bJet_pt;
 		TH1D* 	bJet_eta;
 		TH1D* 	bJet_CSV;
-		TH1D* 	bJet1_pt;
-		TH1D* 	bJet1_eta;
-		TH1D* 	bJet1_CSV;
-		TH1D* 	bJet1_lead_pt;
-		TH1D* 	bJet1_lead_eta;
-		TH1D* 	bJet1_lead_CSV;
 
 };
 
@@ -197,23 +154,10 @@ BackgroundEstimationSkim::BackgroundEstimationSkim(const edm::ParameterSet& iCon
 	inputTTree_(iConfig.getParameter<std::string>("InputTTree")),
 	inputFiles_(iConfig.getParameter<std::vector<std::string> >("InputFiles")),
 
-	hltPaths_(iConfig.getParameter<edm::ParameterSet>("HLTPaths")),
-
-	jetPtMin_(iConfig.getParameter<double>("JetPtMin")),
-	jetPtMax_(iConfig.getParameter<double>("JetPtMax")),
-  	bjetPtMin_(iConfig.getParameter<double>("BJetPtMin")),
-  	bjetCSV_(iConfig.getParameter<double>("BJetCSV")),
-
 	higgsJetSelParame_(iConfig.getParameter<edm::ParameterSet>("HiggsJetSelParams")),
 	jetSelParams_(iConfig.getParameter<edm::ParameterSet>("JetSelParams")), 
 	bjetSelParams_(iConfig.getParameter<edm::ParameterSet>("BJetSelParams")), 
 	evtSelParams_(iConfig.getParameter<edm::ParameterSet>("EvtSelParams")),
-
-	jmeParams_(iConfig.getParameter<edm::ParameterSet>("JMEParams")),
-	jesShift_(iConfig.getParameter<double>("JESShift")),
-	jerShift_(iConfig.getParameter<double>("JERShift")),
-	SFbShift_(iConfig.getParameter<double>("SFbShift")),
-	SFlShift_(iConfig.getParameter<double>("SFlShift")),
 
 	BuildMinTree_(iConfig.getParameter<bool>("BuildMinTree"))
 {
@@ -229,66 +173,48 @@ BackgroundEstimationSkim::~BackgroundEstimationSkim(){
 // ------------ method called once each job just before starting event loop  ------------
 void BackgroundEstimationSkim::beginJob(){ 
 	chain_  = new TChain(inputTTree_.c_str());
+	
+	h_cutflow = fs->make<TH1D>("h_cutflow" ,"Cut flow" ,6 ,0. ,6); 
+	h_cutflow->GetXaxis()->SetBinLabel(1, "BeforeNtuplizer") ; 
+	h_cutflow->GetXaxis()->SetBinLabel(2, "AfterNtuplizer") ; 
+	h_cutflow->GetXaxis()->SetBinLabel(3, "BeforeSkim") ; 
+	h_cutflow->GetXaxis()->SetBinLabel(4, "AfterSkim") ; 
+	h_cutflow->GetXaxis()->SetBinLabel(5, "Before bVeto") ; 
+	h_cutflow->GetXaxis()->SetBinLabel(6, "After bVeto") ; 
 
-	Evt_num		= fs->make<TH1D>("EvtInfo.Entries",	"", 1,   0, 1);
-	Evt_num->GetXaxis()->SetBinLabel(1,"Entries");	
- 
 	for(unsigned i=0; i<inputFiles_.size(); ++i){
 		chain_->Add(inputFiles_.at(i).c_str());
 		TFile *f = TFile::Open(inputFiles_.at(i).c_str(),"READ");
-
-		TH1D* _hevt = (TH1D*)f->Get("BprimebH/EvtInfo.Entries");
-		int _events = _hevt->GetEntries();
-		for( int _evt=0; _evt<_events; _evt++){ Evt_num->Fill(0); }
-
+		TH1F* h_events = (TH1F*)f->Get("skim/h_cutflow") ; 
 		f->Close();
+		h_cutflow->Fill("BeforeNtuplizer", h_events->GetBinContent(1)) ; 
+		h_cutflow->Fill("AfterNtuplizer", h_events->GetBinContent(2)) ;
+		h_cutflow->Fill("BeforeSkim", h_events->GetBinContent(3)) ; 
+		h_cutflow->Fill("AfterSkim", h_events->GetBinContent(4)) ;
 	}
 
-	GenInfo.Register(chain_);
 	JetInfo.Register(chain_,"JetInfo");
 	FatJetInfo.Register(chain_,"FatJetInfo");
 	SubJetInfo.Register(chain_,"SubJetInfo");
 
-/*	chain_->SetBranchAddress("EvtInfo.RunNo",	&_runNo);
-	chain_->SetBranchAddress("EvtInfo.LumiNo",	&_lumiNo);
-	chain_->SetBranchAddress("EvtInfo.EvtNo",	&_evtNo);
-	chain_->SetBranchAddress("EvtInfo.McFlag",	&_mcFlag);
-	chain_->SetBranchAddress("EvtInfo.PU",		&_PU);
-	chain_->SetBranchAddress("EvtInfo.WeightEvt",	&_evtwt);*/
-
         if( BuildMinTree_ ) {
+		fs->cd();
 		newtree = fs->make<TTree>("tree", "") ;
-		newtree->Branch("EvtInfo.EvtNo", 	&evtNo_, 	"EvtInfo.EvtNo/L"); // Store weight of Evt and PU for each event
-		newtree->Branch("EvtInfo.LumiNo", 	&lumiNo_, 	"EvtInfo.LumiNo/I"); // Store weight of Evt and PU for each event
-		newtree->Branch("EvtInfo.RunNo", 	&runNo_, 	"EvtInfo.RunNo/I"); // Store weight of Evt and PU for each event 
-		newtree->Branch("EvtInfo.McFlag", 	&mcFlag_, 	"EvtInfo.McFlag/O"); // store weight of evt and pu for each event
-		newtree->Branch("Evtinfo.PU", 		&PU_, 		"EvtInfo.PU/D"); // store weight of evt and pu for each event
-		newtree->Branch("EvtInfo.WeightEvt", 	&evtwt_, 	"EvtInfo.WeightEvt/D"); // store weight of evt and pu for each event
-		newGenInfo.RegisterTree(newtree);
-		newJetInfo.RegisterTree(newtree,"JetInfo");
-		newFatJetInfo.RegisterTree(newtree,"FatJetInfo");
-		newSubJetInfo.RegisterTree(newtree,"SubJetInfo");
+		newtree = chain_->CloneTree(0);
 	}
 
 	if(  maxEvents_<0 || maxEvents_>chain_->GetEntries()) maxEvents_ = chain_->GetEntries();
 
-	cutFlow		= fs->make<TH1D>("evtinfo.cutFlow",	"", 5,   0, 5); 
-	Higgs_num	= fs->make<TH1D>("higgsjetinfo.Num",	"", 10,   0, 10); 
-	Higgs_pt 	= fs->make<TH1D>("HiggsJetInfo.Pt",	"", 1500, 0, 1500);
-	Higgs_tau2Bytau1= fs->make<TH1D>("HiggsJetInfo.Tau2ByTau1",	"", 10, 0, 1);
-	Higgs_mass	= fs->make<TH1D>("HiggsJetInfo.Mass",	"", 3000, 0, 300);
-	Higgs_subCSV	= fs->make<TH1D>("HiggsJetInfo.SubCSV",	"", 110, 0, 1.1);
-	AK5_num		= fs->make<TH1D>("AK5JetInfo.Num",	"", 10,   0, 10); 
-	AK5_pt 		= fs->make<TH1D>("AK5JetInfo.Pt",	"", 1500, 0, 1500);
-	AK5_eta 	= fs->make<TH1D>("AK5JetInfo.Eta",	"", 600, -3, 3);
-	AK5_CSV		= fs->make<TH1D>("AK5JetInfo.CSV", 	"", 100,  0, 1.);
-	bJet_num 	= fs->make<TH1D>("bJetInfo.Num",	"", 10, 0, 10); 
-	bJet_pt		= fs->make<TH1D>("bJetInfo.Pt",		"", 1500, 0, 1500);
-	bJet_eta	= fs->make<TH1D>("bJetInfo.Eta",	"", 600, -3, 3);
-	bJet_CSV	= fs->make<TH1D>("bJetInfo.CSV", 	"", 100,  0, 1.);
-
-	cutFlow->GetXaxis()->SetBinLabel(1,"All_Evt");	
-	cutFlow->GetXaxis()->SetBinLabel(2,"bVeto_noWt");	
+	Higgs_num	= fs->make<TH1D>("higgsjetinfo_Num",	"", 10,   0, 10); 
+	Higgs_pt 	= fs->make<TH1D>("HiggsJetInfo_Pt",	"", 1500, 0, 1500);
+	Higgs_tau2Bytau1= fs->make<TH1D>("HiggsJetInfo_Tau2ByTau1",	"", 10, 0, 1);
+	Higgs_mass	= fs->make<TH1D>("HiggsJetInfo_Mass",	"", 3000, 0, 300);
+	Higgs_Prmass	= fs->make<TH1D>("HiggsJetInfo_MassPruned",	"", 3000, 0, 300);
+	Higgs_subCSV	= fs->make<TH1D>("HiggsJetInfo_SubCSV",	"", 110, 0, 1.1);
+	bJet_num 	= fs->make<TH1D>("bJetInfo_Num",	"", 10, 0, 10); 
+	bJet_pt		= fs->make<TH1D>("bJetInfo_Pt",		"", 1500, 0, 1500);
+	bJet_eta	= fs->make<TH1D>("bJetInfo_Eta",	"", 600, -3, 3);
+	bJet_CSV	= fs->make<TH1D>("bJetInfo_CSV", 	"", 100,  0, 1.);
 
 	return;  
 
@@ -312,8 +238,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 	for(int entry=0; entry<maxEvents_; entry++){
 		if( (entry%reportEvery_) == 0) edm::LogInfo("Event") << entry << " of " << maxEvents_;
 		chain_->GetEntry(entry);
-		Evt_num->Fill(0);
-		cutFlow->Fill(0);
+		h_cutflow->Fill(4);
 		
 		////  Higgs jets selection ================================================================================ 
 		vector<TLorentzVector> higgsJets;
@@ -328,6 +253,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			Higgs_pt->Fill(FatJetInfo.Pt[i]);
 			Higgs_tau2Bytau1->Fill(tau2Bytau1);
 			Higgs_mass->Fill(FatJetInfo.Mass[i]);
+			Higgs_Prmass->Fill(FatJetInfo.MassPruned[i]);
 			Higgs_subCSV->Fill(SubJetInfo.CombinedSVBJetTags[FatJetInfo.Jet_SubJet1Idx[i]]);
 			Higgs_subCSV->Fill(SubJetInfo.CombinedSVBJetTags[FatJetInfo.Jet_SubJet2Idx[i]]);
 
@@ -342,9 +268,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			bool overlapWithCA8(false); 
 			if( jetSelAK5(JetInfo, i, retjetidak5) == 0 ) continue; // AK5 pre-selection
 		
-			bJet_pt->Fill(JetInfo.Pt[i]);			
-			bJet_CSV->Fill(JetInfo.CombinedSVBJetTags[i]);			
-
  			for ( unsigned int f=0; f<higgsJets.size(); ++f ){ // dR selection
 				if( reco::deltaR(higgsJets[f].Eta(), higgsJets[f].Phi(), JetInfo.Eta[i], JetInfo.Phi[i])< 1.2 ){
 					overlapWithCA8 = true; 
@@ -357,24 +280,18 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
       			Jet thisjet(JetInfo, i);
       			if( !overlapWithCA8 ) myjets.push_back(thisjet) ;
 			 
+			bJet_pt->Fill(JetInfo.Pt[i]);			
+			bJet_eta->Fill(JetInfo.Eta[i]);			
+			bJet_CSV->Fill(JetInfo.CombinedSVBJetTags[i]);			
+
 		}
 		const int nbjets = myjets.size();
 		bJet_num->Fill(nbjets);
 		if( nbjets>0 ) continue;
-		cutFlow->Fill(1);
+		h_cutflow->Fill(5);
 			
 		//// Store new tree, new branch with Jet correction  ==================================================================================================== 
 		if( BuildMinTree_ ){
-			evtNo_ 	= _evtNo;
-			lumiNo_ = _lumiNo;
-			runNo_ 	= _runNo; 
-			mcFlag_ = _mcFlag;
-			PU_ 	= _PU;	
-			evtwt_ 	= _evtwt; 
-			reRegistGen(GenInfo, newGenInfo); 	
-			reRegistJet(JetInfo, newJetInfo);	
-			reRegistJet(FatJetInfo, newFatJetInfo);	
-			reRegistJet(SubJetInfo, newSubJetInfo);
 			newtree->Fill();
 		}
 	} //// entry loop 

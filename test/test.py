@@ -2,19 +2,11 @@ import FWCore.ParameterSet.Config as cms
 
 from FWCore.ParameterSet.VarParsing import VarParsing
 
-#from BackgroundEstimationSkimv1.BackgroundEstimationSkim.BpBpToBHBHinc.BprimeBprimeTobHbHinc_M_800_cfi import * 
-#from BackgroundEstimationSkimv1.BackgroundEstimationSkim.Data.JetHT_Run2012BCD_cfi import * 
 from inputFiles_cfi import * 
-
-FileNames = [
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/GeneralSkimBkg_v1/TTJets_HadronicMGDecays_8TeV-madgraph__Summer12_DR53X-PU_S10_START53_V7A-v1__AODSIM/bprimeTobH_98.root'
-#'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/GeneralSkimBkg_v1/QCD_Pt-600to800_TuneZ2star_8TeV_pythia6__Summer12_DR53X-PU_S10_START53_V7A-v2__AODSIM/bprimeTobH_94.root'
-'file:/afs/cern.ch/user/j/jtsai/eos/cms/store/user/jtsai/bpTobH/backgroundEstimationSkim/GeneralSkimData_v1/Jet__Run2012A_missingPart-22Jan2013-v1__AOD/bprimeTobH_10.root'
-]
 
 options = VarParsing('python')
 
-options.register('outFilename', 'test.root',
+options.register('outFilename', 'bVeto.root',
     VarParsing.multiplicity.singleton,
     VarParsing.varType.string,
     "Output file name"
@@ -24,129 +16,12 @@ options.register('reportEvery', 1000,
     VarParsing.varType.int,
     "Report every N events (default is N=1000)"
     )
-#options.register('jetPtMin', 50.,
-options.register('jetPtMin', 30.,  #For bVeto
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum jet Pt"
-    )
-options.register('jetPtMax', 1.E6,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum jet Pt"
-    )
-#options.register('bJetPtMin', 80.,
-options.register('bJetPtMin', 30., #For bVeto
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum b jet Pt"
-    )
-#options.register('bJetCSV', 0.679,
-options.register('bJetCSV', 0.244, #For bVeto
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "CSV discriminate b jet"
-    )
-options.register('fatJetPtMin', 300.,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum fat jet Pt"
-    )
-options.register('fatJetPtMax', 1.E6,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum fat jet Pt"
-    )
-options.register('fatJetMassMin', 100.,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum fat jet mass"
-    )
-options.register('fatJetMassMax', 150.,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum fat jet mass"
-    )
-options.register('fatJetPrunedMassMin', 75.,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum fat jet pruned mass"
-    )
-options.register('fatJetPrunedMassMax', 1.E6,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum fat jet pruned mass"
-    )
-options.register('fatJetTau2ByTau1Max', 0.5,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum fat jet tau2/tau1"
-    )
-options.register('subjet1CSVDiscMin', 0.679,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum subjet1 b discriminator"
-    )
-options.register('subjet1CSVDiscMax', 1.000,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum subjet1 b discriminator"
-    )
-options.register('subjet2CSVDiscMin', 0.679,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum subjet2 b discriminator"
-    )
-options.register('subjet2CSVDiscMax', 1.000,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum subjet2 b discriminator"
-    )
-options.register('hTMin', 1000,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum HT"
-    )
-options.register('hTMax', 1.E6,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum HT"
-    )
 #####################################################
-options.register('doPUReweighting', True,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.bool,
-    "Do pileup reweighting"
-)
-options.register('JESShift', 0.0,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "JES shift in unit of sigmas" 
-    )
-options.register('JERShift', 0.0,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "JER shift in unit of sigmas" 
-    )
-options.register('SFbShift', 0.0,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "SFb shift in unit of sigmas" 
-    )
-options.register('SFlShift', 0.0,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "SFl shift in unit of sigmas" 
-    )
-if options.SFbShift != 0.0 and options.SFlShift != 0.0: 
-  print "SFbshift = ",  options.SFbShift, " and SFlshift = ", options.SFlShift
-  print "Warning: must be varied independently."
-
 options.setDefault('maxEvents', -1000) 
 
 options.parseArguments()
 
-process = cms.Process("BprimebH")
+process = cms.Process("bVeto")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cout = cms.untracked.PSet(
@@ -162,37 +37,25 @@ process.TFileService = cms.Service("TFileService",
     fileName = cms.string(options.outFilename) 
     )
 
-#from BpbH.BprimeTobH.TriggerSelector_cfi import * 
-#from BpbH.BprimeTobH.HiggsJetSelector_cfi import * 
-#from BpbH.BprimeTobH.HTSelector_cfi import * 
 from BpbH.BprimeTobHAnalysis.EventSelector_cfi import * 
 from BpbH.BprimeTobHAnalysis.JMEUncertUntilParameters_cfi import * 
 
-process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
+process.bVeto = cms.EDAnalyzer('BackgroundEstimationSkim',
     MaxEvents           = cms.int32(options.maxEvents),
     ReportEvery         = cms.int32(options.reportEvery),  
-    InputTTree          = cms.string('BprimebH/tree'),
+    InputTTree          = cms.string('skim/tree'),
     InputFiles          = cms.vstring(FileNames), 
-    HLTPaths            = defaultTriggerSelectionParameters.clone(), 
-#    DoPUReweighting     = cms.bool(options.doPUReweighting),
-#    File_PUDistMC       = cms.string('pileup_Data_Summer12_53X_S10.root'),
-#    File_PUDistData     = cms.string('pileup_Data_Summer12_53X_S10.root'),
-#    Hist_PUDistMC       = cms.string('pileup_mc'),
-#    Hist_PUDistData     = cms.string('pileup_data'),
 	
-    JetPtMin            = cms.double(options.jetPtMin),
-    JetPtMax            = cms.double(options.jetPtMax),
-    BJetPtMin           = cms.double(options.bJetPtMin),
-    BJetCSV           	= cms.double(options.bJetCSV),
-
     JetSelParams        = defaultJetSelectionParameters.clone(
-		jetPtMin 	= cms.double(30),
+		jetPtMin = cms.double(30),
     		jetCSVDiscMin   = cms.double(0.244),   
 	),
     BJetSelParams       = defaultBJetSelectionParameters.clone(),
     HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(
-		#dRSubjetsMin = cms.double(-1),
-		#dRSubjetsMax = cms.double(100),
+    		fatJetPrunedMassMin = cms.double(90),
+    		fatJetPrunedMassMax = cms.double(140),
+    		fatJetMassMin       = cms.double(-1),
+    		fatJetMassMax       = cms.double(10000),
     		subjet1CSVDiscMin   = cms.double(0.679),
 		subjet1CSVDiscMax   = cms.double(1.000),
     		subjet2CSVDiscMin   = cms.double(0.679),
@@ -201,15 +64,9 @@ process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     HTSelParams         = defaultHTSelectionParameters.clone(),
     EvtSelParams        = defaultEventSelectionParameters.clone(),
 
-    JMEParams           = defaultJMEUncertUntilParameters.clone(),
-    JESShift            = cms.double(options.JESShift), 
-    JERShift            = cms.double(options.JERShift), 
-    SFbShift            = cms.double(options.SFbShift), 
-    SFlShift            = cms.double(options.SFlShift),
-
     #BuildMinTree        = cms.bool(False),
     BuildMinTree        = cms.bool(True),
     ) 
 process.SimpleMemoryCheck = cms.Service("SimpleMemoryCheck",ignoreTotal = cms.untracked.int32(1) )
-process.p = cms.Path(process.BprimebH)
+process.p = cms.Path(process.bVeto)
 
