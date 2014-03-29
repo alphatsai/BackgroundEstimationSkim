@@ -170,7 +170,8 @@ def main():
     line_elements = line.split()
     if (len(line_elements)==0 or line_elements[0][0]=='#'): continue
 
-    output_filename = 'bprimeTobH'
+    output_filename = 'bVeto'
+    #output_filename = 'bprimeTobH'
     cfg_parameters = ''
     if( len(line_elements)>3 ):
       cfg_parameters = line_elements[3]
