@@ -170,21 +170,12 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 		TH1D* 	Higgs_pt;
 		TH1D* 	Higgs_tau2Bytau1;
 		TH1D* 	Higgs_mass;
+		TH1D* 	Higgs_Prmass;
 		TH1D* 	Higgs_subCSV;
-		TH1D* 	AK5_num;
-		TH1D* 	AK5_pt;
-		TH1D* 	AK5_eta;
-		TH1D* 	AK5_CSV;
 		TH1D* 	bJet_num;
 		TH1D* 	bJet_pt;
 		TH1D* 	bJet_eta;
 		TH1D* 	bJet_CSV;
-		TH1D* 	bJet1_pt;
-		TH1D* 	bJet1_eta;
-		TH1D* 	bJet1_CSV;
-		TH1D* 	bJet1_lead_pt;
-		TH1D* 	bJet1_lead_eta;
-		TH1D* 	bJet1_lead_CSV;
 
 };
 
@@ -277,11 +268,8 @@ void BackgroundEstimationSkim::beginJob(){
 	Higgs_pt 	= fs->make<TH1D>("HiggsJetInfo.Pt",	"", 1500, 0, 1500);
 	Higgs_tau2Bytau1= fs->make<TH1D>("HiggsJetInfo.Tau2ByTau1",	"", 10, 0, 1);
 	Higgs_mass	= fs->make<TH1D>("HiggsJetInfo.Mass",	"", 3000, 0, 300);
+	Higgs_Prmass	= fs->make<TH1D>("HiggsJetInfo.MassPruned",	"", 3000, 0, 300);
 	Higgs_subCSV	= fs->make<TH1D>("HiggsJetInfo.SubCSV",	"", 110, 0, 1.1);
-	AK5_num		= fs->make<TH1D>("AK5JetInfo.Num",	"", 10,   0, 10); 
-	AK5_pt 		= fs->make<TH1D>("AK5JetInfo.Pt",	"", 1500, 0, 1500);
-	AK5_eta 	= fs->make<TH1D>("AK5JetInfo.Eta",	"", 600, -3, 3);
-	AK5_CSV		= fs->make<TH1D>("AK5JetInfo.CSV", 	"", 100,  0, 1.);
 	bJet_num 	= fs->make<TH1D>("bJetInfo.Num",	"", 10, 0, 10); 
 	bJet_pt		= fs->make<TH1D>("bJetInfo.Pt",		"", 1500, 0, 1500);
 	bJet_eta	= fs->make<TH1D>("bJetInfo.Eta",	"", 600, -3, 3);
@@ -328,6 +316,7 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			Higgs_pt->Fill(FatJetInfo.Pt[i]);
 			Higgs_tau2Bytau1->Fill(tau2Bytau1);
 			Higgs_mass->Fill(FatJetInfo.Mass[i]);
+			Higgs_Prmass->Fill(FatJetInfo.MassPruned[i]);
 			Higgs_subCSV->Fill(SubJetInfo.CombinedSVBJetTags[FatJetInfo.Jet_SubJet1Idx[i]]);
 			Higgs_subCSV->Fill(SubJetInfo.CombinedSVBJetTags[FatJetInfo.Jet_SubJet2Idx[i]]);
 
