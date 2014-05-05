@@ -151,6 +151,7 @@ class BackgroundEstimationSkim : public edm::EDAnalyzer{
 
 		TH1D* 	Evt_num;
 		TH1D* 	cutFlow;
+		TH1D* 	cutFlow_unWt;
 		TH1D* 	Higgs_num;
 		TH1D* 	Higgs_pt;
 		TH1D* 	Higgs_tau2Bytau1;
@@ -234,23 +235,26 @@ void BackgroundEstimationSkim::beginJob(){
 
         if( BuildMinTree_ ) {
 		newtree = fs->make<TTree>("tree", "") ; 
-		newtree->Branch("EvtInfo.EvtTotal", &totalEvts_, "EvtInfo.EvtTotal/I"); // Store weight of Evt and PU for each event
-		newtree->Branch("EvtInfo.EvtNo", &evtNum_, "EvtInfo.EvtNo/L"); // Store weight of Evt and PU for each event
-		newtree->Branch("EvtInfo.LumiNo", &lumiNum_, "EvtInfo.LumiNo/I"); // Store weight of Evt and PU for each event
-		newtree->Branch("EvtInfo.RunNo", &runNum_, "EvtInfo.RunNo/I"); // Store weight of Evt and PU for each event
-		newtree->Branch("EvtInfo.McFlag", &McFlag_, "EvtInfo.McFlag/O"); // Store weight of Evt and PU for each event
-		newtree->Branch("EvtInfo.PU", &evtwtPu_, "EvtInfo.PU/D"); // Store weight of Evt and PU for each event
-		newtree->Branch("EvtInfo.WeightEvt", &evtwt_new, "EvtInfo.WeightEvt/D"); // Store weight of Evt and PU for each event
+		/*newtree->Branch("EvtInfo.EvtTotal", &totalEvts_, "EvtInfo.EvtTotal/I"); 
+		newtree->Branch("EvtInfo.EvtNo", &evtNum_, "EvtInfo.EvtNo/L"); 
+		newtree->Branch("EvtInfo.LumiNo", &lumiNum_, "EvtInfo.LumiNo/I"); 
+		newtree->Branch("EvtInfo.RunNo", &runNum_, "EvtInfo.RunNo/I"); 
+		newtree->Branch("EvtInfo.McFlag", &McFlag_, "EvtInfo.McFlag/O"); 
 		newGenInfo.RegisterTree(newtree);
 		newJetInfo.RegisterTree(newtree,"JetInfo");
 		newFatJetInfo.RegisterTree(newtree,"FatJetInfo");
-		newSubJetInfo.RegisterTree(newtree,"SubJetInfo");
+		newSubJetInfo.RegisterTree(newtree,"SubJetInfo");*/
+		newtree = chain_->CloneTree(0);
+		newtree->Branch("EvtInfo.EvtTotal", &totalEvts_, "EvtInfo.EvtTotal/I"); 
+		newtree->Branch("EvtInfo.PU", &evtwtPu_, "EvtInfo.PU/D"); // Store weight of PU for each event
+		newtree->Branch("EvtInfo.WeightEvt", &evtwt_new, "EvtInfo.WeightEvt/D"); // Store weight of Evt 
 	}
 
 	if(  maxEvents_<0 || maxEvents_>chain_->GetEntries()) maxEvents_ = chain_->GetEntries();
 
 	Evt_num		= fs->make<TH1D>("EvtInfo.Entries",	"", 1,   0, 1); 
 	cutFlow		= fs->make<TH1D>("EvtInfo.CutFlow",	"", 5,   0, 5); 
+	cutFlow_unWt	= fs->make<TH1D>("EvtInfo.CutFlow.UnWt","", 5,   0, 5); 
 	Higgs_num	= fs->make<TH1D>("HiggsJetInfo.Num",	"", 10,   0, 10); 
 	Higgs_pt 	= fs->make<TH1D>("HiggsJetInfo.Pt",	"", 1500, 0, 1500);
 	Higgs_tau2Bytau1= fs->make<TH1D>("HiggsJetInfo.Tau2ByTau1",	"", 10, 0, 1);
@@ -266,6 +270,7 @@ void BackgroundEstimationSkim::beginJob(){
 
 	Evt_num->Sumw2();
 	cutFlow->Sumw2();
+	cutFlow_unWt->Sumw2();
 	AK5_num->Sumw2();
 	AK5_pt->Sumw2();
 	AK5_eta->Sumw2();
@@ -279,8 +284,13 @@ void BackgroundEstimationSkim::beginJob(){
 	cutFlow->GetXaxis()->SetBinLabel(1,"All_Evt");	
 	cutFlow->GetXaxis()->SetBinLabel(2,"Trigger_Sel");	
 	cutFlow->GetXaxis()->SetBinLabel(3,"Vertex_Sel");	
-	cutFlow->GetXaxis()->SetBinLabel(4,"HiggsJet_Sel");	
-	cutFlow->GetXaxis()->SetBinLabel(5,"BJet_Sel");	
+	cutFlow->GetXaxis()->SetBinLabel(4,"Skim_HJet_Sel");	
+	cutFlow->GetXaxis()->SetBinLabel(5,"Skim_BJet_Sel");	
+	cutFlow_unWt->GetXaxis()->SetBinLabel(1,"All_Evt");	
+	cutFlow_unWt->GetXaxis()->SetBinLabel(2,"Trigger_Sel");	
+	cutFlow_unWt->GetXaxis()->SetBinLabel(3,"Vertex_Sel");	
+	cutFlow_unWt->GetXaxis()->SetBinLabel(4,"Skim_HJet_Sel");	
+	cutFlow_unWt->GetXaxis()->SetBinLabel(5,"Skim_BJet_Sel");	
 
 	return;  
 
@@ -320,8 +330,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		isData_  = EvtInfo.McFlag ? 0 : 1; 
 		if( !isData_ ) evtwt_old    = EvtInfo.Weight; 
 		if( doPUReweighting_ && !isData_ ) puweight_ = LumiWeights_.weight(EvtInfo.TrueIT[0]); 
-		evtwt_ *= evtwt_old; 
-		evtwt_ *= puweight_; 
 
 		//// Higgs BR reweighting, for b'b'>bHbH sample
 		double br_(1);
@@ -346,20 +354,25 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 				}
 			}
 		}
-		evtwt_ *= br_; 
+		evtwt_ = evtwt_old*puweight_*br_; 
 
-		cutFlow->Fill(0);
+		//cout<<entry<<" "<<evtwt_old<<" "<<puweight_<<" "<<br_<<" "<<evtwt_old*puweight_*br_<<" "<<evtwt_<<endl; 	
+
+		cutFlow_unWt->Fill(0);
+		cutFlow->Fill("All_Evt", evtwt_);
 		//// Trigger selection =====================================================================================
 		TriggerSelector trigSel(hltPaths_); 
 		passHLT = trigSel.getTrigDecision(EvtInfo); 
 		if( !passHLT ) continue; 
-		cutFlow->Fill(1);
+		cutFlow_unWt->Fill(1);
+		cutFlow->Fill("Trigger_Sel", evtwt_);
 
 		//// Vertex selection =====================================================================================
 		VertexSelector vtxSel(VtxInfo); 
 		nGoodVtxs = vtxSel.NGoodVtxs(); 
 		if( nGoodVtxs < 1){ edm::LogInfo("NoGoodPrimaryVertex") << " No good primary vertex "; continue; }
-		cutFlow->Fill(2);
+		cutFlow_unWt->Fill(2);
+		cutFlow->Fill("Vertex_Sel", evtwt_);
 
 		//// Recall data no Jet =====================================================================================
 		if( isData_ ){
@@ -381,7 +394,8 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		Higgs_num->Fill(nHiggs);
 
 		if( nHiggs<1 ) continue;
-		cutFlow->Fill(3);
+		cutFlow_unWt->Fill(3);
+		cutFlow->Fill("Skim_HJet_Sel", evtwt_);
 
 		//// AK5 and bJet selection ================================================================================
 		//// Preselection for AK5 Jet 
@@ -396,13 +410,14 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		}
 		AK5_num->Fill(nAK5);
 		if( selAK5_ && nAK5<2 ) continue;
-		cutFlow->Fill(4);
+		cutFlow_unWt->Fill(4);
+		cutFlow->Fill("Skim_BJet_Sel", evtwt_);
 		
 		//// Store new tree, new branch with Jet correction  ==================================================================================================== 
 
 		// Fill new tree, new branch
 		if( BuildMinTree_ ){
-			if( isData_ ){
+			/*if( isData_ ){
 				McFlag_=0;
 			}else{
 				McFlag_=1;
@@ -416,7 +431,10 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 			reRegistGen(GenInfo, newGenInfo); 	
 			reRegistJet(JetInfo, newJetInfo);	
 			reRegistJet(FatJetInfo, newFatJetInfo);	
-			reRegistJet(SubJetInfo, newSubJetInfo);
+			reRegistJet(SubJetInfo, newSubJetInfo);*/
+			evtwt_new  = evtwt_old * br_;
+			evtwtPu_   = puweight_;
+			totalEvts_ = maxEvents_;
 			newtree->Fill();
 		}
 
