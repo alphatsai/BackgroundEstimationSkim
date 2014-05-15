@@ -252,21 +252,21 @@ void BackgroundEstimationSkim::beginJob(){
 
 	if(  maxEvents_<0 || maxEvents_>chain_->GetEntries()) maxEvents_ = chain_->GetEntries();
 
-	Evt_num		= fs->make<TH1D>("EvtInfo.Entries",	"", 1,   0, 1); 
-	cutFlow		= fs->make<TH1D>("EvtInfo.CutFlow",	"", 5,   0, 5); 
-	cutFlow_unWt	= fs->make<TH1D>("EvtInfo.CutFlow.UnWt","", 5,   0, 5); 
-	Higgs_num	= fs->make<TH1D>("HiggsJetInfo.Num",	"", 10,   0, 10); 
-	Higgs_pt 	= fs->make<TH1D>("HiggsJetInfo.Pt",	"", 1500, 0, 1500);
-	Higgs_tau2Bytau1= fs->make<TH1D>("HiggsJetInfo.Tau2ByTau1",	"", 10, 0, 1);
-	Higgs_mass	= fs->make<TH1D>("HiggsJetInfo.Mass",	"", 3000, 0, 300);
-	AK5_num		= fs->make<TH1D>("AK5JetInfo.Num",	"", 10,   0, 10); 
-	AK5_pt 		= fs->make<TH1D>("AK5JetInfo.Pt",	"", 1500, 0, 1500);
-	AK5_eta 	= fs->make<TH1D>("AK5JetInfo.Eta",	"", 600, -3, 3);
-	AK5_CSV		= fs->make<TH1D>("AK5JetInfo.CSV", 	"", 100,  0, 1.);
-	bJet_num 	= fs->make<TH1D>("bJetInfo.Num",	"", 10, 0, 10); 
-	bJet_pt		= fs->make<TH1D>("bJetInfo.Pt",		"", 1500, 0, 1500);
-	bJet_eta	= fs->make<TH1D>("bJetInfo.Eta",	"", 600, -3, 3);
-	bJet_CSV	= fs->make<TH1D>("bJetInfo.CSV", 	"", 100,  0, 1.);
+	Evt_num		= fs->make<TH1D>("EvtInfo_Entries",	"", 1,   0, 1); 
+	cutFlow		= fs->make<TH1D>("EvtInfo_CutFlow",	"", 5,   0, 5); 
+	cutFlow_unWt	= fs->make<TH1D>("EvtInfo_CutFlow_UnWt","", 5,   0, 5); 
+	Higgs_num	= fs->make<TH1D>("HiggsJetInfo_Num",	"", 10,   0, 10); 
+	Higgs_pt 	= fs->make<TH1D>("HiggsJetInfo_Pt",	"", 1500, 0, 1500);
+	Higgs_tau2Bytau1= fs->make<TH1D>("HiggsJetInfo_Tau2ByTau1",	"", 10, 0, 1);
+	Higgs_mass	= fs->make<TH1D>("HiggsJetInfo_Mass",	"", 3000, 0, 300);
+	AK5_num		= fs->make<TH1D>("AK5JetInfo_Num",	"", 10,   0, 10); 
+	AK5_pt 		= fs->make<TH1D>("AK5JetInfo_Pt",	"", 1500, 0, 1500);
+	AK5_eta 	= fs->make<TH1D>("AK5JetInfo_Eta",	"", 600, -3, 3);
+	AK5_CSV		= fs->make<TH1D>("AK5JetInfo_CSV", 	"", 100,  0, 1.);
+	bJet_num 	= fs->make<TH1D>("bJetInfo_Num",	"", 10, 0, 10); 
+	bJet_pt		= fs->make<TH1D>("bJetInfo_Pt",		"", 1500, 0, 1500);
+	bJet_eta	= fs->make<TH1D>("bJetInfo_Eta",	"", 600, -3, 3);
+	bJet_CSV	= fs->make<TH1D>("bJetInfo_CSV", 	"", 100,  0, 1.);
 
 	Evt_num->Sumw2();
 	cutFlow->Sumw2();
@@ -307,11 +307,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 	JetSelector jetSelAK5(jetSelParams_); 
 	pat::strbitset rethiggsjet = fatjetSelHiggs.getBitTemplate(); 
 	pat::strbitset retjetidak5 = jetSelAK5.getBitTemplate(); 
-
-	ofstream fout("Evt_NoJets.txt"); 
-	if(  isData_ ){
-		fout << "EvtInfo.RunNo " << " EvtInfo.LumiNo " << " EvtInfo.EvtNo " << std::endl;
-	}
 
 	edm::LogInfo("StartingAnalysisLoop") << "Starting analysis loop\n";
 	
@@ -374,12 +369,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		cutFlow_unWt->Fill(2);
 		cutFlow->Fill("Vertex_Sel", evtwt_);
 
-		//// Recall data no Jet =====================================================================================
-		if( isData_ ){
-			if( JetInfo.Size == 0 ) fout << EvtInfo.RunNo << " " << EvtInfo.LumiNo << " " << EvtInfo.EvtNo << std::endl; 
-		}
-		//cout<<entry<<" "<<EvtInfo.RunNo<<" "<<EvtInfo.LumiNo<<" "<<EvtInfo.EvtNo<<endl;
-		
 		////  Higgs jets selection ================================================================================ 
 		for ( int i=0; i< FatJetInfo.Size; ++i ){
 			rethiggsjet.set(false);
@@ -439,8 +428,6 @@ void BackgroundEstimationSkim::analyze(const edm::Event& iEvent, const edm::Even
 		}
 
 	} //// entry loop 
-
-	fout.close(); 
 
 }
 
