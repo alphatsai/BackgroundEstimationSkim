@@ -18,92 +18,16 @@ options.register('reportEvery', 1000,
     VarParsing.varType.int,
     "Report every N events (default is N=1000)"
     )
-options.register('jetPtMin', 50.,
+options.register('doHLTselection', True,
     VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum jet Pt"
-    )
-options.register('jetPtMax', 1.E6,
+    VarParsing.varType.bool,
+    "Do HLT selection"
+)
+options.register('doGoodVertex', True,
     VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum jet Pt"
-    )
-options.register('bJetPtMin', 80.,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum b jet Pt"
-    )
-options.register('bJetCSV', 0.679,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "CSV discriminate b jet"
-    )
-options.register('fatJetPtMin', 300.,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum fat jet Pt"
-    )
-options.register('fatJetPtMax', 1.E6,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum fat jet Pt"
-    )
-options.register('fatJetMassMin', 100.,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum fat jet mass"
-    )
-options.register('fatJetMassMax', 150.,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum fat jet mass"
-    )
-options.register('fatJetPrunedMassMin', 75.,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum fat jet pruned mass"
-    )
-options.register('fatJetPrunedMassMax', 1.E6,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum fat jet pruned mass"
-    )
-options.register('fatJetTau2ByTau1Max', 0.5,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum fat jet tau2/tau1"
-    )
-options.register('subjet1CSVDiscMin', 0.679,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum subjet1 b discriminator"
-    )
-options.register('subjet1CSVDiscMax', 1.000,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum subjet1 b discriminator"
-    )
-options.register('subjet2CSVDiscMin', 0.679,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum subjet2 b discriminator"
-    )
-options.register('subjet2CSVDiscMax', 1.000,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum subjet2 b discriminator"
-    )
-options.register('hTMin', 1000,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Minimum HT"
-    )
-options.register('hTMax', 1.E6,
-    VarParsing.multiplicity.singleton,
-    VarParsing.varType.float,
-    "Maximum HT"
-    )
-
+    VarParsing.varType.bool,
+    "Do good vertex selection"
+)
 options.register('doPUReweighting', True,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.bool,
@@ -130,46 +54,35 @@ process.TFileService = cms.Service("TFileService",
     fileName = cms.string(options.outFilename) 
     )
 
-#from BpbH.BprimeTobH.TriggerSelector_cfi import * 
-#from BpbH.BprimeTobH.HiggsJetSelector_cfi import * 
-#from BpbH.BprimeTobH.HTSelector_cfi import * 
 from BpbH.BprimeTobHAnalysis.EventSelector_cfi import * 
-from BpbH.BprimeTobHAnalysis.JMEUncertUntilParameters_cfi import * 
 
 process.BprimebH = cms.EDAnalyzer('BackgroundEstimationSkim',
     MaxEvents           = cms.int32(options.maxEvents),
     ReportEvery         = cms.int32(options.reportEvery),  
     InputTTree          = cms.string('ntuple/tree'),
     InputFiles          = cms.vstring(FileNames), 
+
     HLTPaths            = defaultTriggerSelectionParameters.clone(), 
+    DoHLTSelect     	= cms.bool(options.doHLTselection),
+    DoGoodVtxSelect     = cms.bool(options.doGoodVertex),
     DoPUReweighting     = cms.bool(options.doPUReweighting),
     File_PUDistMC       = cms.string('pileup_Data_Summer12_53X_S10.root'),
     File_PUDistData     = cms.string('pileup_Data_Summer12_53X_S10.root'),
     Hist_PUDistMC       = cms.string('pileup_mc'),
     Hist_PUDistData     = cms.string('pileup_data'),
 	
-    JetPtMin            = cms.double(options.jetPtMin),
-    JetPtMax            = cms.double(options.jetPtMax),
-    BJetPtMin           = cms.double(options.bJetPtMin),
-    BJetCSV           	= cms.double(options.bJetCSV),
-
-    JetSelParams        = defaultJetSelectionParameters.clone(),
-    HiggsJetSelParams   = defaultHiggsJetSelectionParameters.clone(
-    		fatJetPtMin         = cms.double(150),
-    		fatJetMassMin       = cms.double(-1),
-    		fatJetMassMax       = cms.double(10000),
-    		fatJetPrunedMassMin = cms.double(-1),
-    		fatJetTau2ByTau1Max = cms.double(1.1),
-    		dRSubjetsMin        = cms.double(-1), 
-		dRSubjetsMax        = cms.double(100), 
-    		subjet1CSVDiscMin   = cms.double(-1),
-    		subjet2CSVDiscMin   = cms.double(-1),
-	), 
-    HTSelParams         = defaultHTSelectionParameters.clone(),
-    EvtSelParams        = defaultEventSelectionParameters.clone(),
+    HJetPtMin		= cms.double(150),
+    HJetPtMax		= cms.double(100000),
+    HJetAbsEtaMin	= cms.double(-1),
+    HJetAbsEtaMax	= cms.double(2.4),
+    JetPtMin		= cms.double(30),
+    JetPtMax		= cms.double(100000),
+    JetAbsEtaMin	= cms.double(-1),
+    JetAbsEtaMax	= cms.double(2.4),
+    numbJetMin		= cms.int32(0),
+    numHiggsJetMin	= cms.int32(1),
 
     #BuildMinTree        = cms.bool(False),
-    SelectAK5        	= cms.bool(False),
     BuildMinTree        = cms.bool(True),
     ) 
 process.SimpleMemoryCheck = cms.Service("SimpleMemoryCheck",ignoreTotal = cms.untracked.int32(1) )
